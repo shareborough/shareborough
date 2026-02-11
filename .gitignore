@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Wrangler cache
+.wrangler/
+
+# Environment (secrets)
+.env.local
+.env.test
+
+# OS files
+.DS_Store
+
+# Editor
+*.swp
+*.swo
