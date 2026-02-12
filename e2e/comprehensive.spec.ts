@@ -414,8 +414,8 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await expect(borrowPage.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
       await borrowPage.close();
 
-      // Check dashboard for pending request
-      await page.goto("/dashboard");
+      // Check notifications page for pending request (moved from Dashboard in Session 023)
+      await page.goto("/dashboard/notifications");
       await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
       await expect(page.getByText("Test Borrower")).toBeVisible();
     });
@@ -440,13 +440,13 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await expect(borrowPage.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
       await borrowPage.close();
 
-      // Approve request — scope to the specific ITEM name (no RLS means all requests visible)
-      await page.goto("/dashboard");
+      // Approve request on notifications page
+      await page.goto("/dashboard/notifications");
       await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
       const requestCard = page.locator(".card").filter({ hasText: "Approve Item" });
       await requestCard.getByRole("button", { name: "Approve" }).click();
 
-      // Should see active loan
+      // Should see active loan in Currently Borrowed section
       await expect(page.getByText("Currently Borrowed")).toBeVisible({ timeout: 5000 });
       await expect(page.getByText("Approve Item")).toBeVisible();
     });
@@ -471,8 +471,8 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await expect(borrowPage.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
       await borrowPage.close();
 
-      // Decline request — scope to specific ITEM name (no RLS means all requests visible)
-      await page.goto("/dashboard");
+      // Decline request on notifications page
+      await page.goto("/dashboard/notifications");
       await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
       const requestCard = page.locator(".card").filter({ hasText: "Decline Item" });
       await requestCard.getByRole("button", { name: "Decline" }).click();
@@ -506,13 +506,14 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await expect(borrowPage.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
       await borrowPage.close();
 
-      await page.goto("/dashboard");
+      // Approve on notifications page first
+      await page.goto("/dashboard/notifications");
       await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
       const approveCard = page.locator(".card").filter({ hasText: "Return Item" });
       await approveCard.getByRole("button", { name: "Approve" }).click();
       await expect(page.getByText("Currently Borrowed")).toBeVisible({ timeout: 5000 });
 
-      // Mark returned — clicks opens a ConfirmDialog modal
+      // Mark returned — opens ConfirmDialog modal
       const loanCard = page.locator(".card").filter({ hasText: "Return Item" }).first();
       await loanCard.getByRole("button", { name: "Mark Returned" }).click();
 

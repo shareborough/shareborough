@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ayb, clearPersistedTokens } from "../lib/ayb";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 interface Props {
   onLogout: () => void;
@@ -63,6 +64,7 @@ export default function NavBar({ onLogout }: Props) {
         >
           My Libraries
         </Link>
+        <NotificationBell />
         <ThemeToggle />
         <div className="relative" ref={menuRef}>
           <button

@@ -3,7 +3,20 @@
  * Generates responsive image URLs with width query params for future backend/CDN support.
  * Currently all URLs resolve to the same image (AYB storage ignores unknown params),
  * but semantic HTML is ready for when image resizing is added to backend or CDN.
+ *
+ * Relative /api/ paths are resolved against VITE_AYB_URL so images load from
+ * the backend (api.shareborough.com) instead of the frontend (shareborough.com).
  */
+
+const API_BASE = import.meta.env.VITE_AYB_URL ?? "";
+
+/** Resolve relative /api/ paths to absolute backend URLs */
+function resolveImageUrl(src: string): string {
+  if (src.startsWith("/api/") && API_BASE) {
+    return `${API_BASE}${src}`;
+  }
+  return src;
+}
 
 interface Props {
   src: string;
@@ -62,10 +75,11 @@ export default function ResponsiveImage({
   const isRemoteImage = !isDataUrl && src.length > 0;
 
   if (isRemoteImage) {
+    const resolved = resolveImageUrl(src);
     return (
       <img
-        src={src}
-        srcSet={generateSrcSet(src)}
+        src={resolved}
+        srcSet={generateSrcSet(resolved)}
         sizes={sizes}
         alt={alt}
         className={className}

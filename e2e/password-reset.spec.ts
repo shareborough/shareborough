@@ -30,8 +30,8 @@ test.describe("Password Reset", () => {
     await expect(page).toHaveURL("/dashboard", { timeout: 15000 });
 
     // Sign out
-    await page.getByRole("button", { name: /avatar/i }).click();
-    await page.getByText("Sign out").click();
+    await page.getByLabel("Account menu").click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
     await page.reload();
     await expect(page).toHaveURL("/login");
 
@@ -108,8 +108,8 @@ test.describe("Password Reset", () => {
     await expect(page).toHaveURL("/dashboard", { timeout: 15000 });
 
     // Sign out
-    await page.getByRole("button", { name: /avatar/i }).click();
-    await page.getByText("Sign out").click();
+    await page.getByLabel("Account menu").click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
     await page.reload();
 
     // Request password reset
@@ -167,8 +167,8 @@ test.describe("Password Reset", () => {
     await expect(page).toHaveURL("/dashboard", { timeout: 15000 });
 
     // Sign out and request reset
-    await page.getByRole("button", { name: /avatar/i }).click();
-    await page.getByText("Sign out").click();
+    await page.getByLabel("Account menu").click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
     await page.reload();
 
     await page.goto("/login");
@@ -221,8 +221,8 @@ test.describe("Password Reset", () => {
     await expect(page).toHaveURL("/dashboard", { timeout: 15000 });
 
     // Sign out
-    await page.getByRole("button", { name: /avatar/i }).click();
-    await page.getByText("Sign out").click();
+    await page.getByLabel("Account menu").click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
     await page.reload();
 
     // Request reset #1

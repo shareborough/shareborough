@@ -16,6 +16,8 @@ import AuthPage from "./pages/AuthPage";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const LibraryDetail = lazy(() => import("./pages/LibraryDetail"));
 const AddItem = lazy(() => import("./pages/AddItem"));
+const EditItem = lazy(() => import("./pages/EditItem"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const Settings = lazy(() => import("./pages/Settings"));
 
 // Lazy load: public routes (loaded on-demand)
@@ -140,6 +142,32 @@ export default function App() {
                   <>
                     <NavBar onLogout={() => setAuthed(false)} />
                     <AddItem />
+                  </>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/dashboard/notifications"
+              element={
+                authed ? (
+                  <>
+                    <NavBar onLogout={() => setAuthed(false)} />
+                    <Notifications />
+                  </>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/dashboard/library/:id/edit/:itemId"
+              element={
+                authed ? (
+                  <>
+                    <NavBar onLogout={() => setAuthed(false)} />
+                    <EditItem />
                   </>
                 ) : (
                   <Navigate to="/login" replace />

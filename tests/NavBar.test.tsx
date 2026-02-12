@@ -16,7 +16,11 @@ const MOCK_TOKEN = vi.hoisted(
   () => `eyJhbGciOiJIUzI1NiJ9.${MOCK_PAYLOAD}.fakesig`,
 );
 const mockAyb = vi.hoisted(
-  () => ({ token: MOCK_TOKEN as string | null }),
+  () => ({
+    token: MOCK_TOKEN as string | null,
+    realtime: { subscribe: vi.fn(() => vi.fn()) },
+    records: { list: vi.fn(() => Promise.resolve({ items: [] })) },
+  }),
 );
 const mockClearPersistedTokens = vi.hoisted(() => vi.fn());
 

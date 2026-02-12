@@ -50,8 +50,8 @@ test.describe("Golden Path — Full User Journey", () => {
     await expect(page.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Your request to borrow")).toBeVisible();
 
-    // Step 10: Go back to owner dashboard to approve
-    await page.goto("/dashboard");
+    // Step 10: Go to notifications page to approve
+    await page.goto("/dashboard/notifications");
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Jane Neighbor")).toBeVisible();
     await expect(page.getByText(itemName)).toBeVisible();
@@ -74,8 +74,8 @@ test.describe("Golden Path — Full User Journey", () => {
     await registerUser(page);
 
     // Open avatar dropdown
-    await page.getByRole("button", { name: /avatar/i }).click();
-    await page.getByText("Settings").click();
+    await page.getByLabel("Account menu").click();
+    await page.getByRole("menuitem", { name: "Settings" }).click();
 
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({ timeout: 5000 });
     await expect(page.getByLabelText("Email")).toBeVisible();
@@ -117,8 +117,8 @@ test.describe("Golden Path — Full User Journey", () => {
     await page.getByRole("button", { name: "Send Request" }).click();
     await expect(page.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
 
-    // Approve from dashboard
-    await page.goto("/dashboard");
+    // Approve from notifications page
+    await page.goto("/dashboard/notifications");
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Approve" }).click();
     await expect(page.getByText("Request approved")).toBeVisible({ timeout: 10000 });

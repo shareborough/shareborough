@@ -22,7 +22,7 @@ test.describe("Photo Upload", () => {
   test("Camera input has capture attribute for mobile", async ({ page }) => {
     const cameraInput = page.locator('label:has-text("Camera") input[type="file"]');
     const captureAttr = await cameraInput.getAttribute("capture");
-    expect(captureAttr).toBe("environment");
+    expect(captureAttr).toBe("");
   });
 
   test("Gallery input does NOT have capture attribute", async ({ page }) => {

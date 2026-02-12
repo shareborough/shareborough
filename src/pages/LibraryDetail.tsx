@@ -107,6 +107,32 @@ export default function LibraryDetail() {
     });
   }
 
+  async function deleteLibrary() {
+    if (!library) return;
+    setDialog({
+      open: true,
+      title: "Delete Library",
+      message: items.length > 0
+        ? `Delete "${library.name}" and all ${items.length} item${items.length !== 1 ? "s" : ""} in it? This cannot be undone.`
+        : `Delete "${library.name}"? This cannot be undone.`,
+      onConfirm: async () => {
+        setDialog((d) => ({ ...d, open: false }));
+        try {
+          // Delete all items first (avoid FK constraint issues)
+          for (const item of items) {
+            await ayb.records.delete("items", item.id);
+          }
+          await ayb.records.delete("libraries", library.id);
+          toast.showSuccess("Library deleted");
+          navigate("/dashboard");
+        } catch (err) {
+          const { message } = friendlyError(err);
+          toast.showError("Couldn't delete library", message);
+        }
+      },
+    });
+  }
+
   function copyShareLink() {
     if (!library) return;
     const url = `${window.location.origin}/l/${library.slug}`;
@@ -207,6 +233,13 @@ export default function LibraryDetail() {
               <Link to={`/dashboard/library/${id}/add`} className="btn-primary text-sm min-h-[44px] flex items-center">
                 + Add Item
               </Link>
+              <button
+                onClick={deleteLibrary}
+                className="text-xs text-red-400 hover:text-red-600 dark:hover:text-red-300 px-2 min-h-[44px] flex items-center transition-colors"
+                aria-label="Delete Library"
+              >
+                Delete Library
+              </button>
             </div>
           </div>
         </div>
@@ -299,9 +332,15 @@ export default function LibraryDetail() {
                       </p>
                     )}
                     <div className="mt-3 flex gap-2">
+                      <Link
+                        to={`/dashboard/library/${id}/edit/${item.id}`}
+                        className="text-xs text-sage-600 hover:text-sage-800 dark:text-sage-400 dark:hover:text-sage-300 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-h-[32px] px-2 -ml-2 flex items-center"
+                      >
+                        Edit
+                      </Link>
                       <button
                         onClick={() => deleteItem(item.id)}
-                        className="text-xs text-red-400 hover:text-red-600 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-h-[32px] px-2 -ml-2"
+                        className="text-xs text-red-400 hover:text-red-600 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-h-[32px] px-2"
                       >
                         Delete
                       </button>
