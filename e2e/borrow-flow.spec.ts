@@ -83,8 +83,8 @@ test.describe("Borrow Flow", () => {
     const slug = await setupOwnerWithItem(page);
     await submitBorrowRequest(page, slug, "Alice Asker", "555-999-0001");
 
-    // Owner goes to dashboard and approves the specific request
-    await page.goto("/dashboard");
+    // Owner goes to notifications page and approves the specific request
+    await page.goto("/dashboard/notifications");
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 5000 });
     const requestCard = page.locator(".card").filter({ hasText: "Alice Asker" });
     await expect(requestCard).toBeVisible();
@@ -98,8 +98,8 @@ test.describe("Borrow Flow", () => {
     const slug = await setupOwnerWithItem(page);
     await submitBorrowRequest(page, slug, "Charlie Cancel", "555-999-0002");
 
-    // Owner declines the specific request
-    await page.goto("/dashboard");
+    // Owner declines the specific request on notifications page
+    await page.goto("/dashboard/notifications");
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 5000 });
     const requestCard = page.locator(".card").filter({ hasText: "Charlie Cancel" });
     await requestCard.getByRole("button", { name: "Decline" }).click();
@@ -112,8 +112,8 @@ test.describe("Borrow Flow", () => {
     const slug = await setupOwnerWithItem(page);
     await submitBorrowRequest(page, slug, "Dave Doer", "555-999-0003");
 
-    // Owner approves the specific request
-    await page.goto("/dashboard");
+    // Owner approves the specific request on notifications page
+    await page.goto("/dashboard/notifications");
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 5000 });
     const requestCard = page.locator(".card").filter({ hasText: "Dave Doer" });
     await requestCard.getByRole("button", { name: "Approve" }).click();

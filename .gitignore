@@ -11,9 +11,8 @@ playwright-report/
 # Wrangler cache
 .wrangler/
 
-# Environment (secrets)
-.env.local
-.env.test
+# AYB local storage
+ayb_storage/
 
 # OS files
 .DS_Store

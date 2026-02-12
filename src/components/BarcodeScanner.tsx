@@ -34,6 +34,13 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
   useEffect(() => {
     if (!scannerRef.current) return;
 
+    // Timeout: if camera doesn't start within 8s, show helpful error
+    const timeout = setTimeout(() => {
+      if (!scanning) {
+        setError("Camera is taking too long to start. Try closing other apps using the camera, or use the Gallery button instead.");
+      }
+    }, 8000);
+
     Quagga.init(
       {
         inputStream: {
@@ -76,6 +83,7 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
     Quagga.onDetected(handleDetected);
 
     return () => {
+      clearTimeout(timeout);
       Quagga.offDetected(handleDetected);
       Quagga.stop();
     };

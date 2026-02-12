@@ -7,14 +7,17 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import ResponsiveImage from "../src/components/ResponsiveImage";
 
+// VITE_AYB_URL is set in .env.test — relative /api/ paths get resolved to this base
+const API_BASE = import.meta.env.VITE_AYB_URL ?? "";
+
 describe("ResponsiveImage", () => {
   describe("Remote images (srcset enabled)", () => {
-    it("renders img with src attribute", () => {
+    it("renders img with src resolved to API base URL", () => {
       render(<ResponsiveImage src="/api/storage/items/photo.jpg" alt="Test item" />);
 
       const img = screen.getByAltText("Test item");
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", "/api/storage/items/photo.jpg");
+      expect(img).toHaveAttribute("src", `${API_BASE}/api/storage/items/photo.jpg`);
     });
 
     it("generates srcset with 5 width variants", () => {
@@ -31,13 +34,13 @@ describe("ResponsiveImage", () => {
       expect(srcset).toContain("1280w");
     });
 
-    it("includes width query params in srcset URLs", () => {
+    it("includes width query params in srcset URLs with API base", () => {
       render(<ResponsiveImage src="/api/storage/items/photo.jpg" alt="Test item" />);
 
       const img = screen.getByAltText("Test item");
       const srcset = img.getAttribute("srcset");
 
-      expect(srcset).toContain("?w=375");
+      expect(srcset).toContain(`${API_BASE}/api/storage/items/photo.jpg?w=375`);
       expect(srcset).toContain("?w=640");
       expect(srcset).toContain("?w=768");
       expect(srcset).toContain("?w=1024");
@@ -175,7 +178,10 @@ describe("ResponsiveImage", () => {
 
       const img = screen.getByAltText("Test item");
       const srcset = img.getAttribute("srcset");
+      const src = img.getAttribute("src");
 
+      // Resolved to API base URL
+      expect(src).toContain(`${API_BASE}/api/storage/items/photo.jpg`);
       // Should have both token and w params
       expect(srcset).toContain("token=abc123");
       expect(srcset).toContain("w=375");
@@ -190,8 +196,8 @@ describe("ResponsiveImage", () => {
       const srcset = img.getAttribute("srcset");
       const sizes = img.getAttribute("sizes");
 
-      // srcset includes 375w variant
-      expect(srcset).toContain("?w=375 375w");
+      // srcset includes 375w variant (resolved to API base)
+      expect(srcset).toContain("w=375 375w");
       // sizes tells browser to use 100vw on small screens
       expect(sizes).toContain("(max-width: 640px) 100vw");
     });
@@ -203,9 +209,9 @@ describe("ResponsiveImage", () => {
       const srcset = img.getAttribute("srcset");
       const sizes = img.getAttribute("sizes");
 
-      // srcset includes both variants
-      expect(srcset).toContain("?w=640 640w");
-      expect(srcset).toContain("?w=768 768w");
+      // srcset includes both variants (resolved to API base)
+      expect(srcset).toContain("w=640 640w");
+      expect(srcset).toContain("w=768 768w");
       // sizes tells browser to use 50vw on medium screens
       expect(sizes).toContain("(max-width: 1024px) 50vw");
     });
@@ -217,8 +223,8 @@ describe("ResponsiveImage", () => {
       const srcset = img.getAttribute("srcset");
       const sizes = img.getAttribute("sizes");
 
-      // srcset includes 1280w variant
-      expect(srcset).toContain("?w=1280 1280w");
+      // srcset includes 1280w variant (resolved to API base)
+      expect(srcset).toContain("w=1280 1280w");
       // sizes tells browser to use 33vw on large screens
       expect(sizes).toContain("33vw");
     });

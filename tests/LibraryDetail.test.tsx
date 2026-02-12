@@ -160,7 +160,8 @@ describe("LibraryDetail", () => {
     renderWithProviders(<LibraryDetail />);
 
     const img = await screen.findByAltText("Drill");
-    expect(img).toHaveAttribute("src", "/api/storage/item-photos/abc.jpg");
+    const apiBase = import.meta.env.VITE_AYB_URL ?? "";
+    expect(img).toHaveAttribute("src", `${apiBase}/api/storage/item-photos/abc.jpg`);
   });
 
   it("renders facet badges for items", async () => {

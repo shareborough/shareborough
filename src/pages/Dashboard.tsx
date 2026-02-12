@@ -4,9 +4,8 @@ import { ayb, isLoggedIn } from "../lib/ayb";
 import { rpc } from "../lib/rpc";
 import { friendlyError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
-import { scheduleReminders } from "../lib/reminders";
 import { useRealtime, type RealtimeEvent } from "../hooks/useRealtime";
-import type { Library, BorrowRequest, Loan, Item, Borrower } from "../types";
+import type { Library, Loan, Item, Borrower } from "../types";
 import CreateLibrary from "../components/CreateLibrary";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Skeleton from "../components/Skeleton";
@@ -16,7 +15,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const toast = useToast();
   const [libraries, setLibraries] = useState<Library[]>([]);
-  const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [allLoans, setAllLoans] = useState<Loan[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -44,13 +42,8 @@ export default function Dashboard() {
   async function loadAll() {
     setLoadError(false);
     try {
-      const [libRes, reqRes, loanRes, allLoanRes, itemRes] = await Promise.all([
+      const [libRes, loanRes, allLoanRes, itemRes] = await Promise.all([
         ayb.records.list<Library>("libraries", { sort: "-created_at", perPage: 100 }),
-        ayb.records.list<BorrowRequest>("borrow_requests", {
-          filter: "status='pending'",
-          sort: "-created_at",
-          perPage: 100,
-        }),
         ayb.records.list<Loan>("loans", {
           filter: "status='active' OR status='late'",
           sort: "-created_at",
@@ -60,14 +53,12 @@ export default function Dashboard() {
         ayb.records.list<Item>("items", { perPage: 500, skipTotal: true }),
       ]);
       setLibraries(libRes.items);
-      setRequests(reqRes.items);
       setLoans(loanRes.items);
       setAllLoans(allLoanRes.items);
       setItems(itemRes.items);
 
-      // Load borrowers for all loans and requests
+      // Load borrowers for all loans
       const borrowerIds = new Set<string>();
-      reqRes.items.forEach((r) => borrowerIds.add(r.borrower_id));
       allLoanRes.items.forEach((l) => borrowerIds.add(l.borrower_id));
       if (borrowerIds.size > 0) {
         const filter = [...borrowerIds].map((id) => `id='${id}'`).join(" OR ");
@@ -89,18 +80,6 @@ export default function Dashboard() {
   }
 
   const handleRealtime = useCallback((event: RealtimeEvent) => {
-    if (event.table === "borrow_requests") {
-      const req = event.record as unknown as BorrowRequest;
-      if (event.action === "create" && req.status === "pending") {
-        setRequests((prev) =>
-          prev.find((r) => r.id === req.id) ? prev : [req, ...prev],
-        );
-      } else if (event.action === "update") {
-        if (req.status !== "pending") {
-          setRequests((prev) => prev.filter((r) => r.id !== req.id));
-        }
-      }
-    }
     if (event.table === "loans") {
       const loan = event.record as unknown as Loan;
       if (event.action === "create") {
@@ -123,65 +102,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  useRealtime(["borrow_requests", "loans", "items"], handleRealtime);
-
-  async function handleApprove(requestId: string) {
-    const request = requests.find((r) => r.id === requestId);
-    const returnDate = request?.return_by
-      ? new Date(request.return_by)
-      : new Date(Date.now() + 14 * 86400000);
-    try {
-      const loan = await rpc<Loan>("approve_borrow", {
-        p_request_id: requestId,
-        p_return_by: returnDate.toISOString(),
-      });
-
-      if (request && loan?.id) {
-        const item = items.find((i) => i.id === request.item_id);
-        const borrower = borrowers.get(request.borrower_id);
-        const library = libraries.find((l) => l.id === item?.library_id);
-        if (item && borrower) {
-          scheduleReminders({
-            loanId: loan.id,
-            itemName: item.name,
-            ownerName: library?.name ?? "your lender",
-            borrowerName: borrower.name,
-            returnBy: returnDate.toISOString(),
-          }).catch(() => {});
-        }
-      }
-
-      setRequests((prev) => prev.filter((r) => r.id !== requestId));
-      toast.showSuccess("Request approved", "The borrower will be notified.");
-      loadAll();
-    } catch (err) {
-      const { message } = friendlyError(err);
-      toast.showError("Couldn't approve request", message);
-    }
-  }
-
-  async function handleDecline(requestId: string) {
-    setDialog({
-      open: true,
-      title: "Decline Request",
-      message: `Decline this borrow request from ${getBorrowerName(requests.find((r) => r.id === requestId)?.borrower_id ?? "")}?`,
-      variant: "danger",
-      confirmLabel: "Decline",
-      onConfirm: async () => {
-        setDialog((d) => ({ ...d, open: false }));
-        try {
-          await ayb.records.update("borrow_requests", requestId, {
-            status: "declined",
-          });
-          setRequests((prev) => prev.filter((r) => r.id !== requestId));
-          toast.showSuccess("Request declined");
-        } catch (err) {
-          const { message } = friendlyError(err);
-          toast.showError("Couldn't decline request", message);
-        }
-      },
-    });
-  }
+  useRealtime(["loans", "items"], handleRealtime);
 
   async function handleReturn(loanId: string) {
     setDialog({
@@ -290,49 +211,11 @@ export default function Dashboard() {
   return (
     <>
       <main className="max-w-4xl mx-auto p-4 sm:p-6">
-        {requests.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">
-              Pending Requests
-              <span className="badge-pending ml-2">{requests.length}</span>
-            </h2>
-            <div className="flex flex-col gap-2">
-              {requests.map((req) => (
-                <div key={req.id} className="card p-3 sm:p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                    <div className="min-w-0">
-                      <span className="font-medium">{getBorrowerName(req.borrower_id)}</span>{" "}
-                      wants to borrow{" "}
-                      <span className="font-medium">{getItemName(req.item_id)}</span>
-                      {req.return_by && (
-                        <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">
-                          until {new Date(req.return_by).toLocaleDateString()}
-                        </span>
-                      )}
-                      {req.message && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">"{req.message}"</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => handleApprove(req.id)} className="btn-primary text-xs px-3 py-2 min-h-[40px]">
-                        Approve
-                      </button>
-                      <button onClick={() => handleDecline(req.id)} className="btn-danger text-xs px-3 py-2 min-h-[40px]">
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {loans.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">
+          <section className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
               Currently Borrowed
-              <span className="badge-borrowed ml-2">{loans.length}</span>
+              <span className="badge-borrowed">{loans.length}</span>
             </h2>
             <div className="flex flex-col gap-2">
               {loans.map((loan) => {
@@ -383,7 +266,7 @@ export default function Dashboard() {
 
           {libraries.length === 0 && !showCreate && (
             <div className="card p-12 text-center">
-              <p className="text-3xl mb-3">📚</p>
+              <p className="text-3xl mb-3">&#x1F4DA;</p>
               <p className="text-gray-500 dark:text-gray-400 mb-4">No libraries yet. Create one to start lending!</p>
               <button onClick={() => setShowCreate(true)} className="btn-primary">
                 Create Your First Library

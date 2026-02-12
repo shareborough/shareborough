@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { uniqueEmail, TEST_PASSWORD, registerUser, loginUser } from "./helpers";
 
+/** Open avatar dropdown and click Sign out */
+async function signOut(page: import("@playwright/test").Page) {
+  await page.getByLabel("Account menu").click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+}
+
 test.describe("Authentication", () => {
   test("shows landing page with sign in and get started links", async ({ page }) => {
     await page.goto("/");
@@ -12,15 +18,16 @@ test.describe("Authentication", () => {
   test("can register a new owner account", async ({ page }) => {
     await registerUser(page);
     await expect(page.getByRole("heading", { name: "My Libraries" })).toBeVisible();
-    await expect(page.getByText("Sign out")).toBeVisible();
+    // Sign out is inside avatar dropdown — open it first
+    await page.getByLabel("Account menu").click();
+    await expect(page.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
   });
 
   test("can login with existing credentials", async ({ page }) => {
     const email = await registerUser(page);
 
-    // Logout — tokens are cleared but Dashboard doesn't auto-redirect.
-    // Reload to trigger the redirect check.
-    await page.getByText("Sign out").click();
+    // Logout via avatar dropdown
+    await signOut(page);
     await page.reload();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible({ timeout: 5000 });
 
@@ -40,7 +47,7 @@ test.describe("Authentication", () => {
 
   test("can logout", async ({ page }) => {
     await registerUser(page);
-    await page.getByText("Sign out").click();
+    await signOut(page);
     // Reload to verify tokens were cleared — should redirect to login
     await page.reload();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible({ timeout: 5000 });
@@ -56,7 +63,7 @@ test.describe("Authentication", () => {
     const email = await registerUser(page);
 
     // Logout and reload to get to login page
-    await page.getByText("Sign out").click();
+    await signOut(page);
     await page.reload();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible({ timeout: 5000 });
 
@@ -83,7 +90,7 @@ test.describe("Authentication", () => {
     const email = await registerUser(page);
 
     // Logout
-    await page.getByText("Sign out").click();
+    await signOut(page);
     await page.reload();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible({ timeout: 5000 });
 
@@ -92,7 +99,7 @@ test.describe("Authentication", () => {
     await expect(page.getByRole("heading", { name: "My Libraries" })).toBeVisible();
 
     // Logout again
-    await page.getByText("Sign out").click();
+    await signOut(page);
     await page.reload();
     await expect(page.getByRole("button", { name: "Sign In" })).toBeVisible({ timeout: 5000 });
 

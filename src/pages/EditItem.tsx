@@ -54,7 +54,12 @@ export default function EditItem() {
       setDescription(existingItem.description ?? "");
       setMaxBorrowDays(existingItem.max_borrow_days?.toString() ?? "");
       if (existingItem.photo_url) {
-        setPhotoPreview(existingItem.photo_url);
+        // Resolve relative /api/ paths to absolute backend URLs
+        const apiBase = import.meta.env.VITE_AYB_URL ?? "";
+        const resolved = existingItem.photo_url.startsWith("/api/") && apiBase
+          ? `${apiBase}${existingItem.photo_url}`
+          : existingItem.photo_url;
+        setPhotoPreview(resolved);
       }
       const fMap = new Map<string, string>();
       existingFacets.items.forEach((fv) => fMap.set(fv.facet_definition_id, fv.value));

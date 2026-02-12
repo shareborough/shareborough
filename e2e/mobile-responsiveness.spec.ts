@@ -1,12 +1,14 @@
-import { test, expect, devices } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { registerUser, createLibrary, openLibrary, uniqueName } from "./helpers";
 
 /**
  * Mobile responsiveness tests
  * Verifies UI works correctly on mobile devices (iPhone SE viewport)
  */
+// Use viewport only (not device emulation) to avoid defaultBrowserType worker conflict
+test.use({ viewport: { width: 375, height: 667 } });
+
 test.describe("Mobile Responsiveness", () => {
-  test.use({ ...devices["iPhone SE"] });
 
   test("Landing page: no overflow, buttons accessible", async ({ page }) => {
     await page.goto("/");

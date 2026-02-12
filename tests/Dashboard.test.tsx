@@ -3,13 +3,11 @@ import { renderWithProviders } from "./testHelpers";
 import Dashboard from "../src/pages/Dashboard";
 
 const mockList = vi.fn();
-const mockUpdate = vi.fn();
 
 vi.mock("../src/lib/ayb", () => ({
   ayb: {
     records: {
       list: (...args: unknown[]) => mockList(...args),
-      update: (...args: unknown[]) => mockUpdate(...args),
     },
     realtime: {
       subscribe: vi.fn(() => () => {}),
@@ -23,12 +21,6 @@ vi.mock("../src/lib/rpc", () => ({
   rpc: (...args: unknown[]) => mockRpc(...args),
 }));
 
-vi.mock("../src/lib/reminders", () => ({
-  scheduleReminders: vi.fn().mockResolvedValue(6),
-}));
-
-import { scheduleReminders } from "../src/lib/reminders";
-
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -40,8 +32,6 @@ vi.mock("react-router-dom", async () => {
 
 function setupEmptyDashboard() {
   // libraries
-  mockList.mockResolvedValueOnce({ items: [] });
-  // pending requests
   mockList.mockResolvedValueOnce({ items: [] });
   // active loans
   mockList.mockResolvedValueOnce({ items: [] });
@@ -61,18 +51,6 @@ function setupDashboardWithData() {
         slug: "power-tools-abc1",
         description: "My tools",
         is_public: true,
-      },
-    ],
-  });
-  // pending requests
-  mockList.mockResolvedValueOnce({
-    items: [
-      {
-        id: "req-1",
-        item_id: "item-1",
-        borrower_id: "bor-1",
-        status: "pending",
-        message: "Need it for the weekend",
       },
     ],
   });
@@ -143,21 +121,13 @@ describe("Dashboard", () => {
     expect(screen.getByText("Create Your First Library")).toBeInTheDocument();
   });
 
-  it("renders libraries, pending requests, and active loans", async () => {
+  it("renders libraries and active loans", async () => {
     setupDashboardWithData();
 
     renderWithProviders(<Dashboard />);
 
     // Library
     expect(await screen.findByText("Power Tools")).toBeInTheDocument();
-
-    // Pending request
-    expect(screen.getByText("Pending Requests")).toBeInTheDocument();
-    expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.getByText("Drill")).toBeInTheDocument();
-    expect(screen.getByText(/Need it for the weekend/)).toBeInTheDocument();
-    expect(screen.getByText("Approve")).toBeInTheDocument();
-    expect(screen.getByText("Decline")).toBeInTheDocument();
 
     // Active loan
     expect(screen.getByText("Currently Borrowed")).toBeInTheDocument();
@@ -168,8 +138,6 @@ describe("Dashboard", () => {
 
   it("shows overdue highlighting for late loans", async () => {
     // libraries
-    mockList.mockResolvedValueOnce({ items: [] });
-    // requests
     mockList.mockResolvedValueOnce({ items: [] });
     // loans — one overdue
     mockList.mockResolvedValueOnce({
@@ -234,8 +202,6 @@ describe("Dashboard", () => {
         },
       ],
     });
-    // pending requests
-    mockList.mockResolvedValueOnce({ items: [] });
     // active loans
     mockList.mockResolvedValueOnce({ items: [] });
     // all loans (for stats) — none
@@ -259,8 +225,6 @@ describe("Dashboard", () => {
         { id: "lib-1", name: "Solo Library", slug: "solo", description: null, is_public: true },
       ],
     });
-    // pending requests
-    mockList.mockResolvedValueOnce({ items: [] });
     // active loans
     mockList.mockResolvedValueOnce({ items: [] });
     // all loans — 2 loans but same borrower
@@ -287,65 +251,6 @@ describe("Dashboard", () => {
     expect(await screen.findByText("Solo Library")).toBeInTheDocument();
     expect(screen.getByTestId("stat-lent")).toHaveTextContent("2 lent");
     expect(screen.getByTestId("stat-friends")).toHaveTextContent("1 friend helped");
-  });
-
-  it("calls rpc and scheduleReminders on approve", async () => {
-    setupDashboardWithData();
-
-    const createdLoan = {
-      id: "loan-new",
-      item_id: "item-1",
-      borrower_id: "bor-1",
-      status: "active",
-    };
-    mockRpc.mockResolvedValue(createdLoan);
-
-    // After approve, loadAll is called again
-    setupEmptyDashboard();
-
-    renderWithProviders(<Dashboard />);
-
-    fireEvent.click(await screen.findByText("Approve"));
-
-    await waitFor(() => {
-      expect(mockRpc).toHaveBeenCalledWith(
-        "approve_borrow",
-        expect.objectContaining({ p_request_id: "req-1" }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(scheduleReminders).toHaveBeenCalledWith(
-        expect.objectContaining({
-          loanId: "loan-new",
-          itemName: "Drill",
-          borrowerName: "Alice",
-        }),
-      );
-    });
-  });
-
-  it("calls update on decline after dialog confirmation", async () => {
-    setupDashboardWithData();
-    mockUpdate.mockResolvedValue({});
-
-    renderWithProviders(<Dashboard />);
-
-    // Click Decline — opens ConfirmDialog
-    fireEvent.click(await screen.findByText("Decline"));
-
-    // Dialog should show the decline message
-    expect(await screen.findByText(/Decline this borrow request/)).toBeInTheDocument();
-
-    // The dialog's confirm button also says "Decline" — get all and click the last one
-    const allDeclineBtns = screen.getAllByRole("button", { name: "Decline" });
-    fireEvent.click(allDeclineBtns[allDeclineBtns.length - 1]);
-
-    await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith("borrow_requests", "req-1", {
-        status: "declined",
-      });
-    });
   });
 
   it("calls return_item rpc on Mark Returned after dialog confirmation", async () => {
