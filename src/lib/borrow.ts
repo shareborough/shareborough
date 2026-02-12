@@ -34,7 +34,7 @@ export async function requestBorrow(params: RequestBorrowParams): Promise<Borrow
     rpcError = err;
     // If the RPC returned a specific domain error (not just "RPC failed"), propagate it
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg && !msg.startsWith("RPC ") && !msg.includes("Failed to fetch") && !msg.includes("NetworkError")) {
+    if (msg && !msg.startsWith("RPC ") && !msg.includes("Failed to fetch") && !msg.includes("NetworkError") && !msg.includes("Unauthorized") && !msg.includes("Forbidden")) {
       throw err;
     }
     // Otherwise fall through to CRUD fallback

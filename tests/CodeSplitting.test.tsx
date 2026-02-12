@@ -84,11 +84,10 @@ describe("Code Splitting & Lazy Loading", () => {
 
     it("should lazy load PublicLibrary route", async () => {
       const { ayb } = await import("../src/lib/ayb");
-      vi.mocked(ayb.records.get).mockResolvedValue({
-        id: "1",
-        name: "Test Library",
-        slug: "test-lib",
-      });
+      // PublicLibrary uses records.list (not get) to find library by slug
+      vi.mocked(ayb.records.list)
+        .mockResolvedValueOnce({ items: [{ id: "1", name: "Test Library", slug: "test-lib" }], totalItems: 1 } as never)
+        .mockResolvedValue({ items: [], totalItems: 0 } as never);
 
       renderWithProviders(<App />, "/l/test-lib");
 
