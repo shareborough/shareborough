@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ayb } from "../lib/ayb";
+import { ayb, isLoggedIn } from "../lib/ayb";
 import { requestBorrow } from "../lib/borrow";
 import { friendlyError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
@@ -144,8 +144,8 @@ export default function PublicItem() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-50" aria-label="Loading item">
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="min-h-screen bg-warm-50 dark:bg-gray-900" aria-label="Loading item">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="max-w-3xl mx-auto">
             <Skeleton className="h-4 w-32" />
           </div>
@@ -169,8 +169,8 @@ export default function PublicItem() {
   if (!library || !item) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-5xl mb-4">📦</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Item not found</h1>
+        <p className="text-5xl mb-4">\ud83d\udce6</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Item not found</h1>
         <Link to={`/l/${slug}`} className="btn-primary mt-4">
           Back to Library
         </Link>
@@ -179,14 +179,21 @@ export default function PublicItem() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 flex flex-col">
+    <div className="min-h-screen bg-warm-50 dark:bg-gray-900 flex flex-col">
       {/* Compact header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-3xl mx-auto flex items-center gap-2">
-          <Link to={`/l/${slug}`} className="text-gray-400 hover:text-gray-600">
-            &larr;
-          </Link>
-          <span className="text-sm text-gray-500">{library.name}</span>
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link to={`/l/${slug}`} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+              &larr;
+            </Link>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{library.name}</span>
+          </div>
+          {isLoggedIn() && (
+            <Link to="/dashboard" className="text-sm text-sage-600 dark:text-sage-400 hover:underline min-h-[44px] flex items-center px-2">
+              My Libraries
+            </Link>
+          )}
         </div>
       </header>
 
@@ -196,7 +203,7 @@ export default function PublicItem() {
             {/* Photo */}
             <div className="sm:w-1/2">
               {item.photo_url ? (
-                <div className="aspect-square bg-gray-100">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700">
                   <ResponsiveImage
                     src={item.photo_url}
                     alt={item.name}
@@ -204,8 +211,8 @@ export default function PublicItem() {
                   />
                 </div>
               ) : (
-                <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                  <span className="text-6xl text-gray-300">📦</span>
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-6xl text-gray-300 dark:text-gray-600">\ud83d\udce6</span>
                 </div>
               )}
             </div>
@@ -213,14 +220,14 @@ export default function PublicItem() {
             {/* Details */}
             <div className="sm:w-1/2 p-6">
               <div className="flex items-start justify-between mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">{item.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{item.name}</h1>
                 <span
                   className={
                     item.status === "available"
                       ? "badge-available"
                       : item.status === "borrowed"
                         ? "badge-borrowed"
-                        : "badge bg-gray-100 text-gray-500"
+                        : "badge bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   }
                 >
                   {item.status}
@@ -228,20 +235,20 @@ export default function PublicItem() {
               </div>
 
               {item.description && (
-                <p className="text-gray-600 mb-4 leading-relaxed">{item.description}</p>
+                <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">{item.description}</p>
               )}
 
               {/* Lending info */}
               {item.max_borrow_days && (
-                <p className="text-sm text-gray-400 mb-2">
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-2">
                   Max borrow period: {item.max_borrow_days} days
                 </p>
               )}
 
               {/* Active loan info (public view) */}
               {activeLoan && (
-                <div className="bg-amber-50 rounded-lg p-3 mb-4 text-sm">
-                  <p className="text-amber-700">
+                <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-3 mb-4 text-sm">
+                  <p className="text-amber-700 dark:text-amber-400">
                     Currently checked out
                     {borrowerName && !activeLoan.private_possession && (
                       <> to <span className="font-medium">{borrowerName}</span></>
@@ -256,14 +263,14 @@ export default function PublicItem() {
               {/* Facet values */}
               {facetValues.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Details</h3>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Details</h3>
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
                     {facetValues.map((fv) => (
                       <div key={fv.id} className="contents">
-                        <dt className="text-sm text-gray-500">
+                        <dt className="text-sm text-gray-500 dark:text-gray-400">
                           {getFacetName(fv.facet_definition_id)}
                         </dt>
-                        <dd className="text-sm text-gray-900 font-medium">{fv.value}</dd>
+                        <dd className="text-sm text-gray-900 dark:text-gray-100 font-medium">{fv.value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -274,8 +281,8 @@ export default function PublicItem() {
               {item.status === "available" ? (
                 showBorrow ? (
                   <form onSubmit={handleBorrow} className="flex flex-col gap-3">
-                    <h3 className="font-semibold text-gray-900">Request to Borrow</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Request to Borrow</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Just your name and phone number — no account needed!
                     </p>
                     <input
@@ -296,7 +303,7 @@ export default function PublicItem() {
                       required
                     />
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">
+                      <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
                         Return by {item.max_borrow_days ? `(max ${item.max_borrow_days} days)` : "(optional)"}
                       </label>
                       <input
@@ -315,12 +322,12 @@ export default function PublicItem() {
                       className="input resize-none"
                       rows={2}
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                    <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={formPrivate}
                         onChange={(e) => setFormPrivate(e.target.checked)}
-                        className="rounded border-gray-300"
+                        className="rounded border-gray-300 dark:border-gray-600"
                       />
                       Keep my possession private
                     </label>
@@ -353,8 +360,8 @@ export default function PublicItem() {
                   </button>
                 )
               ) : (
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-gray-500">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">
                     This item is currently {item.status}. Check back later!
                   </p>
                 </div>

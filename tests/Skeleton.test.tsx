@@ -80,7 +80,7 @@ describe("Skeleton.Card", () => {
   it("renders a card-shaped skeleton with shimmer elements", () => {
     const { container } = render(<Skeleton.Card />);
     const shimmerEls = container.querySelectorAll(".skeleton-shimmer");
-    expect(shimmerEls.length).toBeGreaterThanOrEqual(3);
+    expect(shimmerEls.length).toBe(4);
   });
 
   it("has card styling", () => {

@@ -86,6 +86,6 @@ describe("CreateLibrary", () => {
     });
     fireEvent.submit(screen.getByText("Create Library").closest("form")!);
 
-    expect(await screen.findByText("Something went wrong. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Slug already exists")).toBeInTheDocument();
   });
 });

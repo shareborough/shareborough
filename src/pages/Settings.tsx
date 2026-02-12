@@ -3,14 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { ayb } from "../lib/ayb";
 import { friendlyError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
+import { useTheme } from "../hooks/useTheme";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import type { UserProfile } from "../types";
+import type { ThemeMode } from "../contexts/ThemeContext";
 import Skeleton from "../components/Skeleton";
 import Footer from "../components/Footer";
 
 export default function Settings() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { mode, setMode } = useTheme();
   const pushNotifications = usePushNotifications();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -73,6 +76,12 @@ export default function Settings() {
     }
   }
 
+  const themeOptions: { value: ThemeMode; label: string }[] = [
+    { value: "light", label: "Light" },
+    { value: "dark", label: "Dark" },
+    { value: "system", label: "System" },
+  ];
+
   if (loading) {
     return (
       <main className="max-w-lg mx-auto p-4 sm:p-6" aria-label="Loading settings">
@@ -99,11 +108,11 @@ export default function Settings() {
   return (
     <>
       <main className="max-w-lg mx-auto p-4 sm:p-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">Settings</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Settings</h1>
 
         <form onSubmit={handleSubmit} className="card p-6 flex flex-col gap-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
             </label>
             <input
@@ -111,13 +120,13 @@ export default function Settings() {
               type="email"
               value={email}
               disabled
-              className="input bg-gray-50 text-gray-500 cursor-not-allowed"
+              className="input bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
             />
-            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Email cannot be changed</p>
           </div>
 
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Display name
             </label>
             <input
@@ -131,7 +140,7 @@ export default function Settings() {
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Phone number
             </label>
             <input
@@ -142,7 +151,7 @@ export default function Settings() {
               placeholder="+1 (555) 000-0000"
               className="input"
             />
-            <p className="text-xs text-gray-400 mt-1">Used for SMS reminders about your loans</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Used for SMS reminders about your loans</p>
           </div>
 
           <button type="submit" disabled={saving} className="btn-primary mt-2">
@@ -152,15 +161,15 @@ export default function Settings() {
 
         {/* Push Notifications Section */}
         <div className="card p-6 mt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
             Push Notifications
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             Get instant alerts when someone requests to borrow your items
           </p>
 
           {pushNotifications.error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
               {pushNotifications.error}
             </div>
           )}
@@ -176,8 +185,8 @@ export default function Settings() {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   pushNotifications.isSubscribed
-                    ? "bg-sage-100 text-sage-700"
-                    : "bg-gray-100 text-gray-500"
+                    ? "bg-sage-100 dark:bg-sage-900/30 text-sage-700 dark:text-sage-400"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                 }`}
               >
                 {pushNotifications.isSubscribed ? (
@@ -211,12 +220,12 @@ export default function Settings() {
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {pushNotifications.isSubscribed
                     ? "Notifications enabled"
                     : "Notifications disabled"}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {pushNotifications.isSubscribed
                     ? "You'll receive borrow request alerts"
                     : "Enable to receive instant alerts"}
@@ -249,7 +258,7 @@ export default function Settings() {
               }
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 pushNotifications.isSubscribed
-                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   : "bg-sage-600 text-white hover:bg-sage-700"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -262,12 +271,38 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Theme Section */}
+        <div className="card p-6 mt-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+            Theme
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Choose how Shareborough looks to you
+          </p>
+          <div className="flex gap-3">
+            {themeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setMode(opt.value)}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  mode === opt.value
+                    ? "bg-sage-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Danger Zone: Account Deletion */}
-        <div className="card p-6 mt-6 border-red-200">
-          <h2 className="text-lg font-semibold text-red-700 mb-3">
+        <div className="card p-6 mt-6 border-red-200 dark:border-red-800">
+          <h2 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-3">
             Danger Zone
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             Permanently delete your account and all associated data (libraries, items, loans).
             This action cannot be undone.
           </p>
@@ -276,13 +311,13 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors"
             >
               Delete Account
             </button>
           ) : (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800 font-medium mb-3">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-sm text-red-800 dark:text-red-300 font-medium mb-3">
                 Type your email to confirm: <strong>{email}</strong>
               </p>
               <input
@@ -299,6 +334,7 @@ export default function Settings() {
                   onClick={async () => {
                     setDeleting(true);
                     try {
+                      // @ts-expect-error deleteAccount exists at runtime but missing from @allyourbase/js@0.1.0 types
                       await ayb.auth.deleteAccount();
                       toast.showSuccess("Account deleted");
                       navigate("/");
@@ -320,7 +356,7 @@ export default function Settings() {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmEmail("");
                   }}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>

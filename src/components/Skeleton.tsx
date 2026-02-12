@@ -16,7 +16,7 @@ export default function Skeleton({ className = "h-4 w-full", round }: SkeletonPr
   return (
     <div
       aria-hidden="true"
-      className={`skeleton-shimmer bg-gray-200 ${round ? "rounded-full" : "rounded"} ${className}`}
+      className={`skeleton-shimmer bg-gray-200 dark:bg-gray-700 ${round ? "rounded-full" : "rounded"} ${className}`}
     />
   );
 }
@@ -27,7 +27,7 @@ function SkeletonText({ lines = 3, className = "" }: { lines?: number; className
       {Array.from({ length: lines }, (_, i) => (
         <div
           key={i}
-          className={`skeleton-shimmer bg-gray-200 rounded h-4 ${i === lines - 1 ? "w-2/3" : "w-full"}`}
+          className={`skeleton-shimmer bg-gray-200 dark:bg-gray-700 rounded h-4 ${i === lines - 1 ? "w-2/3" : "w-full"}`}
         />
       ))}
     </div>
@@ -38,11 +38,11 @@ function SkeletonCard({ className = "" }: { className?: string }) {
   return (
     <div className={`card p-6 ${className}`} aria-hidden="true">
       <div className="flex gap-4">
-        <div className="skeleton-shimmer bg-gray-200 rounded-lg h-16 w-16 shrink-0" />
+        <div className="skeleton-shimmer bg-gray-200 dark:bg-gray-700 rounded-lg h-16 w-16 shrink-0" />
         <div className="flex-1 flex flex-col gap-2">
-          <div className="skeleton-shimmer bg-gray-200 rounded h-5 w-2/3" />
-          <div className="skeleton-shimmer bg-gray-200 rounded h-4 w-full" />
-          <div className="skeleton-shimmer bg-gray-200 rounded h-4 w-1/2" />
+          <div className="skeleton-shimmer bg-gray-200 dark:bg-gray-700 rounded h-5 w-2/3" />
+          <div className="skeleton-shimmer bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />
+          <div className="skeleton-shimmer bg-gray-200 dark:bg-gray-700 rounded h-4 w-1/2" />
         </div>
       </div>
     </div>

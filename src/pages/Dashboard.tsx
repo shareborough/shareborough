@@ -250,9 +250,9 @@ export default function Dashboard() {
       <>
         <main className="max-w-4xl mx-auto p-4 sm:p-6">
           <div className="card p-12 text-center">
-            <p className="text-3xl mb-3 text-red-400">!</p>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Unable to load your data</h2>
-            <p className="text-gray-500 mb-4">
+            <p className="text-3xl mb-3 text-red-400 dark:text-red-500">!</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Unable to load your data</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               The server might be down or your internet connection may be interrupted.
             </p>
             <button onClick={loadAll} className="btn-primary">
@@ -292,7 +292,7 @@ export default function Dashboard() {
       <main className="max-w-4xl mx-auto p-4 sm:p-6">
         {requests.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">
               Pending Requests
               <span className="badge-pending ml-2">{requests.length}</span>
             </h2>
@@ -305,12 +305,12 @@ export default function Dashboard() {
                       wants to borrow{" "}
                       <span className="font-medium">{getItemName(req.item_id)}</span>
                       {req.return_by && (
-                        <span className="text-sm text-gray-400 ml-2">
+                        <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">
                           until {new Date(req.return_by).toLocaleDateString()}
                         </span>
                       )}
                       {req.message && (
-                        <p className="text-sm text-gray-500 mt-1">"{req.message}"</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">"{req.message}"</p>
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">
@@ -330,7 +330,7 @@ export default function Dashboard() {
 
         {loans.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">
               Currently Borrowed
               <span className="badge-borrowed ml-2">{loans.length}</span>
             </h2>
@@ -339,14 +339,14 @@ export default function Dashboard() {
                 const overdue = isOverdue(loan);
                 const days = daysUntilDue(loan);
                 return (
-                  <div key={loan.id} className={`card p-3 sm:p-4 ${overdue ? "border-red-200 bg-red-50/30" : ""}`}>
+                  <div key={loan.id} className={`card p-3 sm:p-4 ${overdue ? "border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/20" : ""}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                       <div className="min-w-0">
                         <span className="font-medium">{getItemName(loan.item_id)}</span>
-                        <span className="text-gray-400 mx-2">&rarr;</span>
-                        <span className="text-gray-600">{getBorrowerName(loan.borrower_id)}</span>
+                        <span className="text-gray-400 dark:text-gray-500 mx-2">&rarr;</span>
+                        <span className="text-gray-600 dark:text-gray-300">{getBorrowerName(loan.borrower_id)}</span>
                         {days !== null && (
-                          <span className={`text-sm ml-2 ${overdue ? "text-red-600 font-medium" : "text-gray-400"}`}>
+                          <span className={`text-sm ml-2 ${overdue ? "text-red-600 font-medium" : "text-gray-400 dark:text-gray-500"}`}>
                             {overdue
                               ? `${Math.abs(days)} day${Math.abs(days) !== 1 ? "s" : ""} overdue`
                               : days === 0
@@ -369,7 +369,7 @@ export default function Dashboard() {
 
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">My Libraries</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">My Libraries</h2>
             <button onClick={() => setShowCreate(!showCreate)} className="btn-primary text-sm">
               {showCreate ? "Cancel" : "+ New Library"}
             </button>
@@ -384,7 +384,7 @@ export default function Dashboard() {
           {libraries.length === 0 && !showCreate && (
             <div className="card p-12 text-center">
               <p className="text-3xl mb-3">📚</p>
-              <p className="text-gray-500 mb-4">No libraries yet. Create one to start lending!</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No libraries yet. Create one to start lending!</p>
               <button onClick={() => setShowCreate(true)} className="btn-primary">
                 Create Your First Library
               </button>
@@ -396,21 +396,21 @@ export default function Dashboard() {
               <Link key={lib.id} to={`/dashboard/library/${lib.id}`} className="card p-5 hover:shadow-md transition-shadow group">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-sage-700">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-sage-700 dark:group-hover:text-sage-400">
                       {lib.name}
                     </h3>
                     {lib.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                         {lib.description}
                       </p>
                     )}
                   </div>
-                  <span className="text-sm text-gray-400 shrink-0 ml-2">
+                  <span className="text-sm text-gray-400 dark:text-gray-500 shrink-0 ml-2">
                     {itemCountByLibrary.get(lib.id) ?? 0} items
                   </span>
                 </div>
                 {((lentCountByLibrary.get(lib.id) ?? 0) > 0 || (friendsByLibrary.get(lib.id)?.size ?? 0) > 0) && (
-                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
                     {(lentCountByLibrary.get(lib.id) ?? 0) > 0 && (
                       <span data-testid="stat-lent">{lentCountByLibrary.get(lib.id)} lent</span>
                     )}
@@ -420,10 +420,10 @@ export default function Dashboard() {
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-3">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
                     shareborough.app/l/{lib.slug}
                   </span>
-                  {lib.is_public && <span className="badge bg-sage-50 text-sage-700 text-xs">Public</span>}
+                  {lib.is_public && <span className="badge bg-sage-50 dark:bg-sage-900/30 text-sage-700 dark:text-sage-400 text-xs">Public</span>}
                 </div>
               </Link>
             ))}

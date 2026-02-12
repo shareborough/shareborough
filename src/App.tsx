@@ -76,7 +76,7 @@ export default function App() {
 
   return (
     <ChunkErrorBoundary>
-      <div className="min-h-screen bg-warm-50">
+      <div className="min-h-screen bg-warm-50 dark:bg-gray-900">
         <OfflineBanner />
         <Suspense fallback={<LoadingFallback route="page" variant="page" />}>
           <Routes>

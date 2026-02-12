@@ -40,10 +40,10 @@ test.describe("Items", () => {
     // Hover to reveal delete button and click it
     const itemCard = page.locator(".card").filter({ hasText: "Disposable Item" });
     await itemCard.hover();
+    await itemCard.getByRole("button", { name: "Delete" }).click();
 
-    // Accept the confirmation dialog
-    page.on("dialog", (dialog) => dialog.accept());
-    await itemCard.getByText("Delete").click();
+    // Confirm in the ConfirmDialog modal
+    await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
 
     await expect(page.getByText("Disposable Item")).not.toBeVisible({ timeout: 5000 });
   });

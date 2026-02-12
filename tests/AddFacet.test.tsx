@@ -179,10 +179,10 @@ describe("AddFacet", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: "Add Facet" }).closest("form")!);
 
-    expect(await screen.findByText("Something went wrong. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Duplicate facet name")).toBeInTheDocument();
   });
 
-  it("shows generic error for non-Error exceptions", async () => {
+  it("shows raw error for non-Error exceptions", async () => {
     mockCreate.mockRejectedValueOnce("unknown");
 
     renderWithProviders(<AddFacet libraryId="lib-1" onCreated={() => {}} />);
@@ -192,7 +192,7 @@ describe("AddFacet", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: "Add Facet" }).closest("form")!);
 
-    expect(await screen.findByText("Something went wrong. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("unknown")).toBeInTheDocument();
   });
 
   it("shows loading state during submission", async () => {

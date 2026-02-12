@@ -163,13 +163,13 @@ export default function LibraryDetail() {
     return (
       <>
         <main className="max-w-4xl mx-auto p-4 sm:p-6">
-          <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 mb-4 inline-block">
+          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 mb-4 inline-block">
             &larr; My Libraries
           </Link>
           <div className="card p-12 text-center">
             <p className="text-3xl mb-3 text-red-400">!</p>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Unable to load library</h2>
-            <p className="text-gray-500 mb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Unable to load library</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               The server might be down or your internet connection may be interrupted.
             </p>
             <button onClick={loadLibrary} className="btn-primary">
@@ -183,21 +183,21 @@ export default function LibraryDetail() {
   }
 
   if (!library) {
-    return <div className="flex items-center justify-center py-20 text-gray-400">Library not found</div>;
+    return <div className="flex items-center justify-center py-20 text-gray-400 dark:text-gray-500">Library not found</div>;
   }
 
   return (
     <>
       <main className="max-w-4xl mx-auto p-4 sm:p-6">
         <div className="mb-6">
-          <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 mb-2 inline-block min-h-[44px] flex items-center">
+          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 mb-2 inline-block min-h-[44px] flex items-center">
             &larr; My Libraries
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{library.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{library.name}</h1>
               {library.description && (
-                <p className="text-gray-500 mt-1">{library.description}</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">{library.description}</p>
               )}
             </div>
             <div className="flex gap-2 shrink-0">
@@ -211,19 +211,19 @@ export default function LibraryDetail() {
           </div>
         </div>
 
-        <div className="card p-3 mb-6 flex items-center justify-between bg-sage-50/50">
+        <div className="card p-3 mb-6 flex items-center justify-between bg-sage-50/50 dark:bg-sage-900/30">
           <div className="text-sm">
-            <span className="text-gray-500">Share link: </span>
-            <Link to={`/l/${library.slug}`} className="text-sage-700 font-medium hover:underline">
+            <span className="text-gray-500 dark:text-gray-400">Share link: </span>
+            <Link to={`/l/${library.slug}`} className="text-sage-700 dark:text-sage-400 font-medium hover:underline">
               {window.location.origin}/l/{library.slug}
             </Link>
           </div>
         </div>
 
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <span className="text-sm text-gray-500">Facets:</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">Facets:</span>
           {facetDefs.map((fd) => (
-            <span key={fd.id} className="badge bg-gray-100 text-gray-600">{fd.name}</span>
+            <span key={fd.id} className="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{fd.name}</span>
           ))}
           <button onClick={() => setShowAddFacet(!showAddFacet)} className="text-sm text-sage-600 hover:underline">
             + Add Facet
@@ -238,8 +238,8 @@ export default function LibraryDetail() {
 
         {items.length === 0 ? (
           <div className="card p-12 text-center">
-            <p className="text-3xl mb-3">📦</p>
-            <p className="text-gray-500 mb-4">No items yet. Start cataloging!</p>
+            <p className="text-3xl mb-3">\ud83d\udce6</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No items yet. Start cataloging!</p>
             <Link to={`/dashboard/library/${id}/add`} className="btn-primary">
               Add Your First Item
             </Link>
@@ -253,7 +253,7 @@ export default function LibraryDetail() {
               return (
                 <div key={item.id} className="card overflow-hidden group">
                   {item.photo_url ? (
-                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
                       <ResponsiveImage
                         src={item.photo_url}
                         alt={item.name}
@@ -261,37 +261,37 @@ export default function LibraryDetail() {
                       />
                     </div>
                   ) : (
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      <span className="text-4xl text-gray-300">📦</span>
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-4xl text-gray-300 dark:text-gray-600">\ud83d\udce6</span>
                     </div>
                   )}
                   <div className="p-4">
                     <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                      <span className={item.status === "available" ? "badge-available" : item.status === "borrowed" ? "badge-borrowed" : "badge bg-gray-100 text-gray-500"}>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</h3>
+                      <span className={item.status === "available" ? "badge-available" : item.status === "borrowed" ? "badge-borrowed" : "badge bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}>
                         {item.status}
                       </span>
                     </div>
-                    {item.description && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>}
+                    {item.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
                     <div className="flex items-center gap-1.5 mt-1">
                       {item.visibility === "circle" && circleName ? (
                         <span className="badge bg-blue-50 text-blue-700 text-xs">{circleName}</span>
                       ) : (
-                        <span className="badge bg-sage-50 text-sage-700 text-xs">Public</span>
+                        <span className="badge bg-sage-50 dark:bg-sage-900/30 text-sage-700 dark:text-sage-400 text-xs">Public</span>
                       )}
-                      {item.max_borrow_days && <span className="text-xs text-gray-400">Max {item.max_borrow_days}d</span>}
+                      {item.max_borrow_days && <span className="text-xs text-gray-400 dark:text-gray-500">Max {item.max_borrow_days}d</span>}
                     </div>
                     {itemFacets.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {itemFacets.map((fv) => (
-                          <span key={fv.id} className="text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">
+                          <span key={fv.id} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded px-1.5 py-0.5">
                             {getFacetName(fv.facet_definition_id)}: {fv.value}
                           </span>
                         ))}
                       </div>
                     )}
                     {activeLoan && library.show_borrower_names && (
-                      <p className="text-xs text-amber-600 mt-2">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                         Borrowed by {borrowers.get(activeLoan.borrower_id)?.name ?? "someone"}
                         {activeLoan.return_by && library.show_return_dates && (
                           <> — due {new Date(activeLoan.return_by).toLocaleDateString()}</>

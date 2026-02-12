@@ -194,6 +194,8 @@ describe("Settings", () => {
     // Should still render the page, not crash
     expect(await screen.findByText("Settings")).toBeInTheDocument();
     expect(screen.getByLabelText("Display name")).toHaveValue("");
+    // Verify the API was actually called (not just testing initial state)
+    expect(mockList).toHaveBeenCalled();
   });
 
   // ========== Account Deletion ==========

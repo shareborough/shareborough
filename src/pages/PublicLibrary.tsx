@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ayb } from "../lib/ayb";
+import { ayb, isLoggedIn } from "../lib/ayb";
 import { friendlyError, isNetworkError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
 import type { Library, Item, FacetDefinition, ItemFacet, Loan } from "../types";
@@ -128,8 +128,8 @@ export default function PublicLibrary() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-50" aria-label="Loading library">
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
+      <div className="min-h-screen bg-warm-50 dark:bg-gray-900" aria-label="Loading library">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
           <div className="max-w-5xl mx-auto">
             <Skeleton className="h-4 w-20 mb-2" />
             <Skeleton className="h-8 w-48 mb-2" />
@@ -158,8 +158,8 @@ export default function PublicLibrary() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <p className="text-3xl mb-3 text-red-400">!</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Unable to load library</h1>
-        <p className="text-gray-500 mb-6">The server might be down or your internet connection may be interrupted.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Unable to load library</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">The server might be down or your internet connection may be interrupted.</p>
         <button onClick={loadLibrary} className="btn-primary">Try Again</button>
       </div>
     );
@@ -168,28 +168,35 @@ export default function PublicLibrary() {
   if (notFound || !library) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-5xl mb-4">📚</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Library not found</h1>
-        <p className="text-gray-500 mb-6">This library doesn't exist or is private.</p>
+        <p className="text-5xl mb-4">\ud83d\udcda</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Library not found</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">This library doesn't exist or is private.</p>
         <Link to="/" className="btn-primary">Go Home</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 flex flex-col">
+    <div className="min-h-screen bg-warm-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">📚</span>
-            <span className="text-sm text-gray-400">Shareborough</span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">\ud83d\udcda</span>
+              <span className="text-sm text-gray-400 dark:text-gray-500">Shareborough</span>
+            </div>
+            {isLoggedIn() && (
+              <Link to="/dashboard" className="text-sm text-sage-600 dark:text-sage-400 hover:underline min-h-[44px] flex items-center px-2">
+                My Libraries
+              </Link>
+            )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{library.name}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{library.name}</h1>
           {library.description && (
-            <p className="text-gray-500 mt-1">{library.description}</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">{library.description}</p>
           )}
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
             {items.length} item{items.length !== 1 ? "s" : ""} available to borrow
           </p>
         </div>
@@ -212,7 +219,7 @@ export default function PublicLibrary() {
             if (!opts || opts.size === 0) return null;
             return (
               <div key={fd.id} className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-sm text-gray-500">{fd.name}:</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{fd.name}:</span>
                 {[...opts].sort().map((val) => (
                   <button
                     key={val}
@@ -220,7 +227,7 @@ export default function PublicLibrary() {
                     className={`badge cursor-pointer transition-colors ${
                       activeFilters.get(fd.id) === val
                         ? "bg-sage-600 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                     }`}
                   >
                     {val}
@@ -229,7 +236,7 @@ export default function PublicLibrary() {
                 {activeFilters.has(fd.id) && (
                   <button
                     onClick={() => toggleFilter(fd.id, activeFilters.get(fd.id)!)}
-                    className="text-xs text-gray-400 hover:text-gray-600"
+                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     clear
                   </button>
@@ -241,7 +248,7 @@ export default function PublicLibrary() {
 
         {/* Items Grid */}
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">
             {search || activeFilters.size > 0
               ? "No items match your filters"
               : "This library is empty"}
@@ -258,7 +265,7 @@ export default function PublicLibrary() {
                   className="card overflow-hidden hover:shadow-md transition-shadow group"
                 >
                   {item.photo_url ? (
-                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
                       <ResponsiveImage
                         src={item.photo_url}
                         alt={item.name}
@@ -266,12 +273,12 @@ export default function PublicLibrary() {
                       />
                     </div>
                   ) : (
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      <span className="text-4xl text-gray-300">📦</span>
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-4xl text-gray-300 dark:text-gray-600">\ud83d\udce6</span>
                     </div>
                   )}
                   <div className="p-3">
-                    <h3 className="font-medium text-gray-900 text-sm truncate">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
                       {item.name}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-1">
@@ -284,18 +291,18 @@ export default function PublicLibrary() {
                               : "w-2 h-2 rounded-full bg-gray-400"
                         }
                       />
-                      <span className="text-xs text-gray-500 capitalize">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                         {item.status}
                       </span>
                       {item.max_borrow_days && (
-                        <span className="text-xs text-gray-400 ml-1">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
                           ({item.max_borrow_days}d max)
                         </span>
                       )}
                     </div>
                     {/* Loan info for checked-out items */}
                     {loan && (
-                      <p className="text-xs text-amber-600 mt-1">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                         {loan.return_by && (
                           <>Due {new Date(loan.return_by).toLocaleDateString()}</>
                         )}
@@ -306,7 +313,7 @@ export default function PublicLibrary() {
                         {itemFacets.slice(0, 2).map((fv) => (
                           <span
                             key={fv.id}
-                            className="text-xs bg-gray-100 text-gray-500 rounded px-1 py-0.5"
+                            className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded px-1 py-0.5"
                           >
                             {getFacetName(fv.facet_definition_id)}: {fv.value}
                           </span>

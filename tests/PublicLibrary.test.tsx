@@ -18,6 +18,7 @@ vi.mock("../src/lib/ayb", () => ({
       list: (...args: unknown[]) => mockList(...args),
     },
   },
+  isLoggedIn: () => false,
 }));
 
 describe("PublicLibrary", () => {

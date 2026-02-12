@@ -151,6 +151,75 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await page.getByRole("link", { name: /Sign in/i }).click();
       await expect(page).toHaveURL("/login");
     });
+
+    test("1.9 Account Deletion: danger zone visible on settings", async ({ page }) => {
+      await registerUser(page);
+      await page.goto("/dashboard/settings");
+
+      await expect(page.getByRole("heading", { name: "Danger Zone" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Delete Account" })).toBeVisible();
+    });
+
+    test("1.9 Account Deletion: email confirmation required", async ({ page }) => {
+      await registerUser(page);
+      await page.goto("/dashboard/settings");
+
+      // Click Delete Account to show confirmation form
+      await page.getByRole("button", { name: "Delete Account" }).click();
+
+      // Confirmation input should appear
+      await expect(page.getByLabel("Confirm email for deletion")).toBeVisible();
+
+      // Delete button should be disabled until email matches
+      const deleteBtn = page.getByRole("button", { name: "Delete My Account" });
+      await expect(deleteBtn).toBeDisabled();
+
+      // Type wrong email
+      await page.getByLabel("Confirm email for deletion").fill("wrong@example.com");
+      await expect(deleteBtn).toBeDisabled();
+    });
+
+    test("1.9 Account Deletion: cancel hides confirmation form", async ({ page }) => {
+      await registerUser(page);
+      await page.goto("/dashboard/settings");
+
+      // Show confirmation
+      await page.getByRole("button", { name: "Delete Account" }).click();
+      await expect(page.getByLabel("Confirm email for deletion")).toBeVisible();
+
+      // Cancel should hide it
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await expect(page.getByLabel("Confirm email for deletion")).not.toBeVisible();
+      await expect(page.getByRole("button", { name: "Delete Account" })).toBeVisible();
+    });
+
+    test("1.9 Account Deletion: complete deletion flow", async ({ page }) => {
+      const email = await registerUser(page);
+      await page.goto("/dashboard/settings");
+
+      // Click Delete Account
+      await page.getByRole("button", { name: "Delete Account" }).click();
+
+      // Type correct email
+      await page.getByLabel("Confirm email for deletion").fill(email);
+
+      // Delete button should now be enabled
+      const deleteBtn = page.getByRole("button", { name: "Delete My Account" });
+      await expect(deleteBtn).toBeEnabled();
+
+      // Click delete
+      await deleteBtn.click();
+
+      // Should redirect to landing page
+      await expect(page).toHaveURL("/", { timeout: 10000 });
+
+      // Should show success toast
+      await expect(page.locator('[role="alert"]').filter({ hasText: /Account deleted/i })).toBeVisible({ timeout: 5000 });
+
+      // Tokens should be cleared
+      const token = await page.evaluate(() => localStorage.getItem("ayb_token"));
+      expect(token).toBeFalsy();
+    });
   });
 
   // ========== 2. NAVIGATION ==========
@@ -584,6 +653,17 @@ test.describe("Comprehensive Behavior Coverage", () => {
       const instructions = page.locator('text="Drag to pan, pinch or scroll to zoom"');
       // Initially not visible
       await expect(instructions).not.toBeVisible();
+    });
+
+    test("5.3 Barcode Scanner: scan button visible on add item form", async ({ page }) => {
+      await registerUser(page);
+      const libName = uniqueName("Barcode");
+      await createLibrary(page, libName);
+      await openLibrary(page, libName);
+      await page.getByRole("link", { name: /Add Item/i }).click();
+
+      // Scan Barcode button should be visible
+      await expect(page.getByRole("button", { name: /Scan Barcode/i })).toBeVisible();
     });
   });
 

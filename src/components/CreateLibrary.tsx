@@ -46,10 +46,10 @@ export default function CreateLibrary({ onCreated }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="card p-5">
-      <h3 className="font-semibold text-gray-900 mb-3">New Library</h3>
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">New Library</h3>
       <div className="flex flex-col gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
           <input
             type="text"
             placeholder="e.g. Power Tools, Board Games, Books..."
@@ -60,14 +60,14 @@ export default function CreateLibrary({ onCreated }: Props) {
             autoFocus
           />
           {name && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
               Link: shareborough.app/l/{nameToSlug(name)}
             </p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description <span className="text-gray-400">(optional)</span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Description <span className="text-gray-400 dark:text-gray-500">(optional)</span>
           </label>
           <textarea
             placeholder="What kind of stuff is in this library?"

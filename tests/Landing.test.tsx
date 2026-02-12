@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 import Landing from "../src/pages/Landing";
 
 function renderLanding(authed = false) {
   return render(
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Landing authed={authed} />
+      <ThemeProvider>
+        <Landing authed={authed} />
+      </ThemeProvider>
     </BrowserRouter>,
   );
 }

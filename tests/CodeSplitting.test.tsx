@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { ToastProvider } from "../src/contexts/ToastContext";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 import App from "../src/App";
 
 // Mock AYB client
@@ -44,7 +45,9 @@ function renderWithProviders(ui: React.ReactElement, initialRoute = "/") {
     <BrowserRouter
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
-      <ToastProvider>{ui}</ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>{ui}</ToastProvider>
+      </ThemeProvider>
     </BrowserRouter>,
   );
 }

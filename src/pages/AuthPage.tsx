@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ayb, persistTokens } from "../lib/ayb";
 import { friendlyError } from "../lib/errorMessages";
 import Footer from "../components/Footer";
+import ThemeToggle from "../components/ThemeToggle";
 
 interface Props {
   mode: "login" | "register";
@@ -41,6 +42,7 @@ export default function AuthPage({ mode, onAuth }: Props) {
     setError("");
     setOauthLoading(provider);
     try {
+      // @ts-expect-error signInWithOAuth exists at runtime but missing from @allyourbase/js@0.1.0 types
       await ayb.auth.signInWithOAuth(provider);
       persistTokens();
       onAuth();
@@ -62,16 +64,19 @@ export default function AuthPage({ mode, onAuth }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="card p-8 w-full max-w-sm">
           <Link to="/" className="flex items-center gap-2 mb-6">
             <span className="text-2xl">📚</span>
             <span className="text-lg font-bold text-sage-800">Shareborough</span>
           </Link>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
             {mode === "login" ? "Welcome back" : "Create your account"}
           </h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {mode === "login"
               ? "Sign in to manage your lending libraries"
               : "Start cataloging and sharing your stuff"}
@@ -122,10 +127,10 @@ export default function AuthPage({ mode, onAuth }: Props) {
 
           <div className="relative mb-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-gray-400">or</span>
+              <span className="bg-white dark:bg-gray-800 px-2 text-gray-400 dark:text-gray-500">or</span>
             </div>
           </div>
 
@@ -156,7 +161,7 @@ export default function AuthPage({ mode, onAuth }: Props) {
                   : "Create Account"}
             </button>
           </form>
-          <div className="mt-4 text-center text-sm text-gray-500">
+          <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
             {mode === "login" ? (
               <>
                 Don't have an account?{" "}

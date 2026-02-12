@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 import NavBar from "../src/components/NavBar";
 
 const mockNavigate = vi.fn();
@@ -29,7 +30,9 @@ function renderNavBar(onLogout = vi.fn()) {
     onLogout,
     ...render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <NavBar onLogout={onLogout} />
+        <ThemeProvider>
+          <NavBar onLogout={onLogout} />
+        </ThemeProvider>
       </BrowserRouter>,
     ),
   };
@@ -198,7 +201,9 @@ describe("NavBar without token", () => {
   it("shows placeholder avatar when no token", () => {
     render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <NavBar onLogout={vi.fn()} />
+        <ThemeProvider>
+          <NavBar onLogout={vi.fn()} />
+        </ThemeProvider>
       </BrowserRouter>,
     );
     expect(screen.getByText("?")).toBeInTheDocument();
@@ -207,7 +212,9 @@ describe("NavBar without token", () => {
   it("does not show email in dropdown when no token", () => {
     render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <NavBar onLogout={vi.fn()} />
+        <ThemeProvider>
+          <NavBar onLogout={vi.fn()} />
+        </ThemeProvider>
       </BrowserRouter>,
     );
     fireEvent.click(screen.getByLabelText("Account menu"));

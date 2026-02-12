@@ -32,7 +32,7 @@ export default function BorrowConfirmation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-warm-50" aria-label="Loading request">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-warm-50 dark:bg-gray-900" aria-label="Loading request">
         <div className="card p-8 max-w-md w-full flex flex-col items-center gap-4">
           <Skeleton className="h-12 w-12" round />
           <Skeleton className="h-7 w-48" />
@@ -44,16 +44,16 @@ export default function BorrowConfirmation() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-warm-50">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-warm-50 dark:bg-gray-900">
       <div className="card p-8 max-w-md w-full text-center">
         <div className="text-5xl mb-4">
           {request?.status === "approved"
-            ? "🎉"
+            ? "\ud83c\udf89"
             : request?.status === "declined"
-              ? "😔"
-              : "📬"}
+              ? "\ud83d\ude14"
+              : "\ud83d\udcec"}
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           {request?.status === "approved"
             ? "Request Approved!"
             : request?.status === "declined"
@@ -62,28 +62,28 @@ export default function BorrowConfirmation() {
         </h1>
         {request?.status === "pending" && (
           <>
-            <p className="text-gray-500 mb-2">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
               Your request to borrow{" "}
-              <span className="font-medium text-gray-900">{item?.name ?? "this item"}</span>{" "}
+              <span className="font-medium text-gray-900 dark:text-gray-100">{item?.name ?? "this item"}</span>{" "}
               has been sent to the owner.
             </p>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
               You'll get a text message when they respond. No need to create an
               account or do anything else!
             </p>
           </>
         )}
         {request?.status === "approved" && (
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             You've been approved to borrow{" "}
-            <span className="font-medium text-gray-900">{item?.name ?? "this item"}</span>.
+            <span className="font-medium text-gray-900 dark:text-gray-100">{item?.name ?? "this item"}</span>.
             Check your texts for details.
           </p>
         )}
         {request?.status === "declined" && (
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             The owner has declined your request for{" "}
-            <span className="font-medium text-gray-900">{item?.name ?? "this item"}</span>.
+            <span className="font-medium text-gray-900 dark:text-gray-100">{item?.name ?? "this item"}</span>.
             Maybe try another item?
           </p>
         )}

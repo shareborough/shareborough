@@ -99,7 +99,7 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
           <div
             key={toast.id}
             role="alert"
-            className={`pointer-events-auto bg-white rounded-lg shadow-lg border border-gray-200 border-l-4 ${style.border} p-3 animate-toast-in`}
+            className={`pointer-events-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 border-l-4 ${style.border} p-3 animate-toast-in`}
           >
             <div className="flex items-start gap-2.5">
               <span
@@ -108,14 +108,14 @@ function ToastContainer({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss:
                 {style.icon}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">{toast.title}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{toast.title}</p>
                 {toast.message && (
-                  <p className="text-sm text-gray-500 mt-0.5">{toast.message}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{toast.message}</p>
                 )}
               </div>
               <button
                 onClick={() => onDismiss(toast.id)}
-                className="text-gray-400 hover:text-gray-600 text-sm shrink-0 p-0.5"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-sm shrink-0 p-0.5"
                 aria-label="Dismiss"
               >
                 &#x2715;

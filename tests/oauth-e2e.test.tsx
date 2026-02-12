@@ -249,7 +249,7 @@ describe("B6: OAuth Provider Error", () => {
     fireEvent.click(screen.getByText("Continue with Google"));
 
     await waitFor(() => {
-      expect(screen.getByText("Something went wrong. Please try again.")).toBeInTheDocument();
+      expect(screen.getByText("some error")).toBeInTheDocument();
     });
     // Should NOT have navigated
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -269,8 +269,7 @@ describe("B7: User Closes OAuth Popup", () => {
     fireEvent.click(screen.getByText("Continue with Google"));
 
     await waitFor(() => {
-      // Friendly error shows (generic since popup-close isn't in errorMessages mapping)
-      expect(screen.getByText("Something went wrong. Please try again.")).toBeInTheDocument();
+      expect(screen.getByText("OAuth popup was closed by the user")).toBeInTheDocument();
     });
   });
 
@@ -300,7 +299,7 @@ describe("B8: SSE Connection Failure", () => {
     fireEvent.click(screen.getByText("Continue with Google"));
 
     await waitFor(() => {
-      expect(screen.getByText("Something went wrong. Please try again.")).toBeInTheDocument();
+      expect(screen.getByText("Failed to connect to OAuth SSE channel")).toBeInTheDocument();
     });
   });
 

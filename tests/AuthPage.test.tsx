@@ -5,6 +5,7 @@ import AuthPage from "../src/pages/AuthPage";
 const mockLogin = vi.fn();
 const mockRegister = vi.fn();
 const mockSignInWithOAuth = vi.fn();
+const mockPersistTokens = vi.fn();
 
 vi.mock("../src/lib/ayb", () => ({
   ayb: {
@@ -14,7 +15,7 @@ vi.mock("../src/lib/ayb", () => ({
       signInWithOAuth: (...args: unknown[]) => mockSignInWithOAuth(...args),
     },
   },
-  persistTokens: vi.fn(),
+  persistTokens: (...args: unknown[]) => mockPersistTokens(...args),
 }));
 
 const mockNavigate = vi.fn();
@@ -112,6 +113,7 @@ describe("AuthPage", () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith("alice@example.com", "password123");
     });
+    expect(mockPersistTokens).toHaveBeenCalled();
     expect(onAuth).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
@@ -133,6 +135,7 @@ describe("AuthPage", () => {
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith("bob@example.com", "securepass");
     });
+    expect(mockPersistTokens).toHaveBeenCalled();
     expect(onAuth).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
@@ -244,7 +247,7 @@ describe("AuthPage", () => {
 
     // Wait for error to appear (loading cleared)
     await waitFor(() => {
-      expect(screen.getByText("Something went wrong. Please try again.")).toBeInTheDocument();
+      expect(screen.getByText("popup was closed")).toBeInTheDocument();
     });
 
     // Buttons should be re-enabled

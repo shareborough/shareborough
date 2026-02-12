@@ -16,7 +16,7 @@ export default function LoadingFallback({
   variant = "page",
 }: LoadingFallbackProps) {
   return (
-    <div className="min-h-screen bg-warm-50" aria-label={`Loading ${route}`}>
+    <div className="min-h-screen bg-warm-50 dark:bg-gray-900" aria-label={`Loading ${route}`}>
       {/* Dashboard layout: grid of cards */}
       {variant === "dashboard" && (
         <div className="max-w-6xl mx-auto px-4 py-8">

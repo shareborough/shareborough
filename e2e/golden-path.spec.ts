@@ -65,9 +65,8 @@ test.describe("Golden Path — Full User Journey", () => {
 
     // Step 13: Mark as returned
     await page.getByRole("button", { name: "Mark Returned" }).click();
-    // Confirm in dialog
-    const confirmBtns = page.getByRole("button", { name: "Mark Returned" });
-    await confirmBtns.last().click();
+    // Confirm in the ConfirmDialog modal
+    await page.getByRole("dialog").getByRole("button", { name: "Mark Returned" }).click();
     await expect(page.getByText("Item marked as returned")).toBeVisible({ timeout: 10000 });
   });
 

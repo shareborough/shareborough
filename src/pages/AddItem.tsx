@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { ayb, isLoggedIn } from "../lib/ayb";
 import { processImage, createPreview } from "../lib/image";
 import { friendlyError } from "../lib/errorMessages";
+import { formatBarcodeResult } from "../lib/barcode";
 import { useToast } from "../hooks/useToast";
 import type { FacetDefinition, Item, Library, Circle } from "../types";
+import BarcodeScanner from "../components/BarcodeScanner";
 import ImageCropper from "../components/ImageCropper";
 import Skeleton from "../components/Skeleton";
 import Footer from "../components/Footer";
@@ -25,6 +27,8 @@ export default function AddItem() {
   const [showCropper, setShowCropper] = useState(false);
   const [rawPreview, setRawPreview] = useState<string | null>(null);
   const [facetValues, setFacetValues] = useState<Map<string, string>>(new Map());
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
   const toast = useToast();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,6 +96,25 @@ export default function AddItem() {
     }
     setShowCropper(false);
     setRawPreview(null);
+  }
+
+  async function handleBarcodeDetected(code: string, format: string) {
+    setShowScanner(false);
+    setScanLoading(true);
+    try {
+      const result = await formatBarcodeResult(code, format);
+      if (result.name) {
+        setName(result.name);
+      }
+      if (result.description) {
+        setDescription((prev) => prev ? `${prev}\n${result.description}` : result.description);
+      }
+      toast.showSuccess(`Scanned: ${code}`);
+    } catch {
+      toast.showError("Couldn't look up barcode");
+    } finally {
+      setScanLoading(false);
+    }
   }
 
   function updateFacetValue(defId: string, value: string) {
@@ -168,16 +191,16 @@ export default function AddItem() {
       <main className="max-w-xl mx-auto p-4 sm:p-6">
         <Link
           to={`/dashboard/library/${id}`}
-          className="text-sm text-gray-400 hover:text-gray-600 mb-4 inline-block"
+          className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 mb-4 inline-block"
         >
           &larr; Back to {library.name}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Add Item</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Add Item</h1>
 
         <form onSubmit={handleSubmit} className="card p-6 flex flex-col gap-4">
           {/* Photo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Photo</label>
 
             {showCropper && rawPreview ? (
               <ImageCropper
@@ -188,12 +211,12 @@ export default function AddItem() {
             ) : (
               <div className="flex items-center gap-4">
                 {photoPreview ? (
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
                     <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                    <span className="text-2xl text-gray-300">📷</span>
+                  <div className="w-24 h-24 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                    <span className="text-2xl text-gray-300 dark:text-gray-600">📷</span>
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
@@ -218,15 +241,34 @@ export default function AddItem() {
                       />
                     </label>
                   </div>
-                  <p className="text-xs text-gray-400">JPG, PNG, or HEIC</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG, or HEIC</p>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Barcode Scanner */}
+          <div>
+            {showScanner ? (
+              <BarcodeScanner
+                onDetected={handleBarcodeDetected}
+                onClose={() => setShowScanner(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                disabled={scanLoading}
+                className="btn-secondary text-sm w-full"
+              >
+                {scanLoading ? "Looking up barcode..." : "📊 Scan Barcode (ISBN / UPC)"}
+              </button>
+            )}
+          </div>
+
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
             <input
               type="text"
               placeholder="What is this item?"
@@ -240,8 +282,8 @@ export default function AddItem() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description <span className="text-gray-400">(optional)</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Description <span className="text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
             <textarea
               placeholder="Any details about this item..."
@@ -254,8 +296,8 @@ export default function AddItem() {
 
           {/* Max borrow period */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Max borrow period <span className="text-gray-400">(days, optional)</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Max borrow period <span className="text-gray-400 dark:text-gray-500">(days, optional)</span>
             </label>
             <input
               type="number"
@@ -270,7 +312,7 @@ export default function AddItem() {
 
           {/* Visibility */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Visibility</label>
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as "public" | "circle")}
@@ -296,11 +338,11 @@ export default function AddItem() {
           {/* Facet values */}
           {facetDefs.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Details</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Details</label>
               <div className="flex flex-col gap-2">
                 {facetDefs.map((fd) => (
                   <div key={fd.id} className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600 w-32 shrink-0">{fd.name}</label>
+                    <label className="text-sm text-gray-600 dark:text-gray-300 w-32 shrink-0">{fd.name}</label>
                     {fd.options && fd.options.length > 0 ? (
                       <select
                         value={facetValues.get(fd.id) ?? ""}

@@ -56,7 +56,7 @@ test.describe("Borrow Flow", () => {
     const publicPage = await page.context().newPage();
     await publicPage.goto(`/l/${slug}`);
     await expect(publicPage.getByText("Electric Sander")).toBeVisible({ timeout: 5000 });
-    await expect(publicPage.locator(".capitalize", { hasText: "available" })).toBeVisible();
+    await expect(publicPage.getByText("available", { exact: true }).first()).toBeVisible();
     await publicPage.close();
   });
 
@@ -122,6 +122,9 @@ test.describe("Borrow Flow", () => {
     // Owner marks returned
     const loanCard = page.locator(".card").filter({ hasText: "Electric Sander" }).filter({ hasText: "Dave Doer" });
     await loanCard.getByRole("button", { name: "Mark Returned" }).click();
+
+    // Confirm in the ConfirmDialog modal
+    await page.getByRole("dialog").getByRole("button", { name: "Mark Returned" }).click();
 
     // Loan should disappear
     await expect(loanCard).not.toBeVisible({ timeout: 5000 });

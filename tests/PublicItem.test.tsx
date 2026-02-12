@@ -22,6 +22,7 @@ vi.mock("../src/lib/ayb", () => ({
       get: (...args: unknown[]) => mockGet(...args),
     },
   },
+  isLoggedIn: () => false,
 }));
 
 const mockRequestBorrow = vi.fn();
@@ -182,7 +183,7 @@ describe("PublicItem", () => {
     });
     fireEvent.submit(screen.getByText("Send Request").closest("form")!);
 
-    expect(await screen.findByText("Something went wrong. Please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Item is not available")).toBeInTheDocument();
   });
 
   it("hides borrow form when Cancel is clicked", async () => {

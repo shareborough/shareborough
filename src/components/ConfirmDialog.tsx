@@ -51,14 +51,14 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/40 dark:bg-black/60"
         onClick={onCancel}
         data-testid="dialog-backdrop"
       />
       {/* Dialog */}
       <div className="card relative p-6 max-w-sm w-full shadow-xl" role="dialog" aria-modal="true">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-500 mb-6">{message}</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{message}</p>
         <div className="flex gap-2 justify-end">
           <button onClick={onCancel} className="btn-secondary">
             {cancelLabel}

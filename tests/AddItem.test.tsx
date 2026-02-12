@@ -41,6 +41,27 @@ vi.mock("../src/components/ImageCropper", () => ({
   ),
 }));
 
+// Mock BarcodeScanner — render a simple UI that fires onDetected or onClose
+const mockOnDetectedRef = { current: null as null | ((code: string, format: string) => void) };
+const mockOnCloseRef = { current: null as null | (() => void) };
+vi.mock("../src/components/BarcodeScanner", () => ({
+  default: ({ onDetected, onClose }: { onDetected: (code: string, format: string) => void; onClose: () => void }) => {
+    mockOnDetectedRef.current = onDetected;
+    mockOnCloseRef.current = onClose;
+    return (
+      <div data-testid="barcode-scanner">
+        <button onClick={() => onDetected("9780134685991", "ean_13")}>Simulate Scan</button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    );
+  },
+}));
+
+const mockFormatBarcodeResult = vi.fn();
+vi.mock("../src/lib/barcode", () => ({
+  formatBarcodeResult: (...args: unknown[]) => mockFormatBarcodeResult(...args),
+}));
+
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -326,7 +347,7 @@ describe("AddItem", () => {
       fireEvent.submit(screen.getByRole("button", { name: "Add Item" }).closest("form")!);
 
       // Message appears in both inline <p> and toast, so use findAllByText
-      const msgs = await screen.findAllByText("Something went wrong. Please try again.");
+      const msgs = await screen.findAllByText("unexpected");
       expect(msgs.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -453,6 +474,103 @@ describe("AddItem", () => {
       });
       // Only called once for item creation, not for facet
       expect(mockCreate).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("barcode scanner", () => {
+    it("renders scan barcode button", async () => {
+      setupLibraryLoad();
+
+      renderWithProviders(<AddItem />);
+
+      const scanBtn = await screen.findByRole("button", { name: /Scan Barcode/i });
+      expect(scanBtn).toBeInTheDocument();
+      expect(scanBtn).toHaveTextContent("Scan Barcode (ISBN / UPC)");
+    });
+
+    it("shows scanner component when scan button clicked", async () => {
+      setupLibraryLoad();
+
+      renderWithProviders(<AddItem />);
+
+      await screen.findByRole("heading", { name: "Add Item" });
+      fireEvent.click(screen.getByRole("button", { name: /Scan Barcode/i }));
+
+      expect(screen.getByTestId("barcode-scanner")).toBeInTheDocument();
+    });
+
+    it("hides scanner and shows loading when barcode detected (ISBN)", async () => {
+      setupLibraryLoad();
+      mockFormatBarcodeResult.mockResolvedValueOnce({
+        name: "Effective Java by Joshua Bloch",
+        description: "ISBN: 9780134685991",
+      });
+
+      renderWithProviders(<AddItem />);
+
+      await screen.findByRole("heading", { name: "Add Item" });
+      fireEvent.click(screen.getByRole("button", { name: /Scan Barcode/i }));
+
+      // Simulate barcode scan
+      fireEvent.click(screen.getByText("Simulate Scan"));
+
+      // Should show loading state
+      await waitFor(() => {
+        expect(screen.getByText("Looking up barcode...")).toBeInTheDocument();
+      });
+
+      // formatBarcodeResult called with correct code and format
+      expect(mockFormatBarcodeResult).toHaveBeenCalledWith("9780134685991", "ean_13");
+
+      // After lookup completes, name and description should be filled
+      await waitFor(() => {
+        expect((screen.getByPlaceholderText("What is this item?") as HTMLInputElement).value)
+          .toBe("Effective Java by Joshua Bloch");
+      });
+
+      await waitFor(() => {
+        expect((screen.getByPlaceholderText("Any details about this item...") as HTMLTextAreaElement).value)
+          .toBe("ISBN: 9780134685991");
+      });
+    });
+
+    it("shows error toast when barcode lookup fails", async () => {
+      setupLibraryLoad();
+      mockFormatBarcodeResult.mockRejectedValueOnce(new Error("Network error"));
+
+      renderWithProviders(<AddItem />);
+
+      await screen.findByRole("heading", { name: "Add Item" });
+      fireEvent.click(screen.getByRole("button", { name: /Scan Barcode/i }));
+
+      // Simulate barcode scan
+      fireEvent.click(screen.getByText("Simulate Scan"));
+
+      // Should show error toast
+      await waitFor(() => {
+        expect(screen.getByText("Couldn't look up barcode")).toBeInTheDocument();
+      });
+
+      // Name and description should remain empty
+      expect((screen.getByPlaceholderText("What is this item?") as HTMLInputElement).value).toBe("");
+    });
+
+    it("closes scanner when cancel clicked", async () => {
+      setupLibraryLoad();
+
+      renderWithProviders(<AddItem />);
+
+      await screen.findByRole("heading", { name: "Add Item" });
+      fireEvent.click(screen.getByRole("button", { name: /Scan Barcode/i }));
+
+      expect(screen.getByTestId("barcode-scanner")).toBeInTheDocument();
+
+      // Click cancel
+      fireEvent.click(screen.getByText("Cancel"));
+
+      // Scanner should be gone, scan button should be back
+      expect(screen.queryByTestId("barcode-scanner")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Scan Barcode/i })).toBeInTheDocument();
     });
   });
 });

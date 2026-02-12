@@ -57,6 +57,11 @@ export function friendlyError(error: unknown): { message: string; type: "error" 
       return { message: mapping.userMessage, type: mapping.type ?? "error" };
     }
   }
+  // If the server returned a readable message, show it instead of a generic error.
+  // Only fall back to generic if the raw message is empty or looks like a stack trace.
+  if (raw && raw.length < 200 && !raw.includes("\n") && !raw.includes("at ")) {
+    return { message: raw, type: "error" };
+  }
   return { message: "Something went wrong. Please try again.", type: "error" };
 }
 

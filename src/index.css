@@ -31,7 +31,7 @@
     @apply bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 font-medium rounded-lg px-4 py-2.5 text-sm transition-colors touch-manipulation;
   }
   .input {
-    @apply bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500/30 focus:border-sage-500 placeholder-gray-400 transition-shadow w-full max-w-full;
+    @apply bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-sage-500/30 focus:border-sage-500 placeholder-gray-400 transition-shadow w-full max-w-full;
   }
   .card {
     @apply bg-white rounded-xl border border-gray-100 shadow-sm w-full max-w-full;
@@ -51,6 +51,32 @@
   .badge-pending {
     @apply badge bg-blue-50 text-blue-700;
   }
+}
+
+/* Dark mode overrides for component utilities */
+.dark .btn-secondary {
+  @apply bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-200 border-gray-600;
+}
+.dark .btn-danger {
+  @apply bg-red-900/30 hover:bg-red-900/50 active:bg-red-900/70 text-red-400;
+}
+.dark .input {
+  @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-500 focus:border-sage-400 focus:ring-sage-400/30;
+}
+.dark .card {
+  @apply bg-gray-800 border-gray-700 shadow-none;
+}
+.dark .badge-available {
+  @apply bg-green-900/30 text-green-400;
+}
+.dark .badge-borrowed {
+  @apply bg-amber-900/30 text-amber-400;
+}
+.dark .badge-late {
+  @apply bg-red-900/30 text-red-400;
+}
+.dark .badge-pending {
+  @apply bg-blue-900/30 text-blue-400;
 }
 
 /* Toast animations */
@@ -83,4 +109,9 @@
   background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
 }

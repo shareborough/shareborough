@@ -11,6 +11,7 @@ import Landing from "../src/pages/Landing";
 import NavBar from "../src/components/NavBar";
 import Dashboard from "../src/pages/Dashboard";
 import { renderWithProviders } from "./testHelpers";
+import { ThemeProvider } from "../src/contexts/ThemeContext";
 
 // --- Mock AYB client ---
 
@@ -91,7 +92,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={false} />
+          <ThemeProvider>
+            <Landing authed={false} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -110,10 +113,12 @@ describe("Navigation E2E", () => {
           initialEntries={["/landing"]}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Routes>
-            <Route path="/landing" element={<Landing authed={false} />} />
-            <Route path="/login" element={<div>Login Page</div>} />
-          </Routes>
+          <ThemeProvider>
+            <Routes>
+              <Route path="/landing" element={<Landing authed={false} />} />
+              <Route path="/login" element={<div>Login Page</div>} />
+            </Routes>
+          </ThemeProvider>
         </MemoryRouter>,
       );
 
@@ -127,10 +132,12 @@ describe("Navigation E2E", () => {
           initialEntries={["/landing"]}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Routes>
-            <Route path="/landing" element={<Landing authed={false} />} />
-            <Route path="/signup" element={<div>Signup Page</div>} />
-          </Routes>
+          <ThemeProvider>
+            <Routes>
+              <Route path="/landing" element={<Landing authed={false} />} />
+              <Route path="/signup" element={<div>Signup Page</div>} />
+            </Routes>
+          </ThemeProvider>
         </MemoryRouter>,
       );
 
@@ -145,7 +152,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={false} />
+          <ThemeProvider>
+            <Landing authed={false} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -166,7 +175,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={true} />
+          <ThemeProvider>
+            <Landing authed={true} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -184,7 +195,9 @@ describe("Navigation E2E", () => {
           initialEntries={["/landing"]}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={true} />
+          <ThemeProvider>
+            <Landing authed={true} />
+          </ThemeProvider>
         </MemoryRouter>,
       );
 
@@ -202,7 +215,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -217,7 +232,9 @@ describe("Navigation E2E", () => {
           initialEntries={["/dashboard"]}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </MemoryRouter>,
       );
 
@@ -233,7 +250,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -254,7 +273,9 @@ describe("Navigation E2E", () => {
           <BrowserRouter
             future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
           >
-            <NavBar onLogout={onLogout} />
+            <ThemeProvider>
+              <NavBar onLogout={onLogout} />
+            </ThemeProvider>
           </BrowserRouter>
           <div data-testid="outside">Outside</div>
         </div>,
@@ -277,7 +298,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -308,7 +331,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -327,7 +352,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -352,7 +379,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={false} />
+          <ThemeProvider>
+            <Landing authed={false} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -376,7 +405,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -400,7 +431,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <Landing authed={false} />
+          <ThemeProvider>
+            <Landing authed={false} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -419,7 +452,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -435,7 +470,9 @@ describe("Navigation E2E", () => {
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar onLogout={onLogout} />
+          <ThemeProvider>
+            <NavBar onLogout={onLogout} />
+          </ThemeProvider>
         </BrowserRouter>,
       );
 
@@ -485,7 +522,9 @@ describe("Navigation E2E", () => {
           <BrowserRouter
             future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
           >
-            <Landing authed={false} />
+            <ThemeProvider>
+              <Landing authed={false} />
+            </ThemeProvider>
           </BrowserRouter>,
         );
 
