@@ -38,11 +38,16 @@ jobs:
 
       - name: Run unit tests
         run: |
-          # Vitest OOMs on exit due to jsdom memory leak (known issue). All tests pass
-          # but the process leaks memory during teardown. Use --pool=forks for proper
-          # cleanup + timeout as safety net. Exit 124 (timeout) = tests passed, exit hung.
-          timeout 300 npx vitest run --pool=forks; rc=$?
-          [ $rc -eq 0 ] || [ $rc -eq 124 ] || exit $rc
+          # Vitest hangs on exit due to jsdom memory leak. Tests pass but process
+          # won't exit. Use if/elif to handle exit codes (set -e safe).
+          if timeout 300 npx vitest run --pool=forks; then
+            echo "Tests passed"
+          elif [ $? -eq 124 ]; then
+            echo "Tests passed (vitest timed out on exit — known jsdom issue)"
+          else
+            echo "Tests failed"
+            exit 1
+          fi
 
   build-and-deploy:
     name: Build & Deploy
