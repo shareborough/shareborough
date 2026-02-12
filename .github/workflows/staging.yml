@@ -24,15 +24,24 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+          NO_COLOR: "1"
         run: |
-          # Vitest hangs on exit due to jsdom memory leak. Tests pass but process
-          # won't exit. Use if/elif to handle exit codes (set -e safe).
-          if timeout 300 npx vitest run --pool=forks; then
-            echo "Tests passed"
-          elif [ $? -eq 124 ]; then
-            echo "Tests passed (vitest timed out on exit — known jsdom issue)"
+          set +e
+          OUTPUT=$(timeout 300 npx vitest run --pool=forks 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "FAIL  tests/"; then
+            echo "::error::Unit tests have failing test files"
+            exit 1
+          fi
+          PASS_COUNT=$(echo "$OUTPUT" | grep -c "tests/.*test" || true)
+          if [ "$PASS_COUNT" -gt 0 ]; then
+            echo "Tests passed: ${PASS_COUNT} test files (exit code ${EXIT_CODE})"
           else
-            echo "Tests failed"
+            echo "::error::No test files found in output — something went wrong"
             exit 1
           fi
 
