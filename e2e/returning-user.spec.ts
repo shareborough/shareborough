@@ -32,7 +32,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Returning User — Pre-existing Data CRUD", () => {
   test.beforeAll(async () => {
-    apiBase = process.env.AYB_URL ?? "http://localhost:8090";
+    apiBase = process.env.AYB_URL ?? process.env.VITE_AYB_URL ?? "http://localhost:8090";
 
     // 1. Register user via API
     const regRes = await fetch(`${apiBase}/api/auth/register`, {
