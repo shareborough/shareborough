@@ -42,8 +42,7 @@ export default function Notifications() {
     try {
       const userId = currentUserId();
 
-      // Load owned libraries first, then filter everything else to owned data.
-      // Without this, public_read RLS policies leak other users' data here.
+      // Step 1: Load owned libraries. Without this, public_read RLS leaks other users' data.
       const libFilter = userId ? `owner_id='${userId}'` : undefined;
       const libRes = await ayb.records.list<Library>("libraries", {
         filter: libFilter,
@@ -51,35 +50,53 @@ export default function Notifications() {
       });
       setLibraries(libRes.items);
 
-      const ownedLibIds = new Set(libRes.items.map((l) => l.id));
+      if (libRes.items.length === 0) {
+        setItems([]);
+        setRequests([]);
+        setLoans([]);
+        setLoading(false);
+        return;
+      }
 
-      const [reqRes, loanRes, itemRes] = await Promise.all([
-        ayb.records.list<BorrowRequest>("borrow_requests", {
-          filter: "status='pending'",
-          sort: "-created_at",
-          perPage: 100,
-        }),
-        ayb.records.list<Loan>("loans", {
-          filter: "status='active' OR status='late'",
-          sort: "-created_at",
-          perPage: 100,
-        }),
-        ayb.records.list<Item>("items", { perPage: 500, skipTotal: true }),
+      // Step 2: Load items server-side filtered to owned libraries.
+      // Without this filter, items_public_read returns ALL public items which can
+      // exceed perPage limits and push owned items out of the results.
+      const libIdFilter = libRes.items.map((l) => `library_id='${l.id}'`).join(" OR ");
+      const itemRes = await ayb.records.list<Item>("items", {
+        filter: libIdFilter,
+        perPage: 500,
+        skipTotal: true,
+      });
+      setItems(itemRes.items);
+
+      // Step 3: Load requests and loans filtered to owned items
+      const itemIdFilter = itemRes.items.length > 0
+        ? itemRes.items.map((i) => `item_id='${i.id}'`).join(" OR ")
+        : undefined;
+
+      const [reqRes, loanRes] = await Promise.all([
+        itemIdFilter
+          ? ayb.records.list<BorrowRequest>("borrow_requests", {
+              filter: `(${itemIdFilter}) AND status='pending'`,
+              sort: "-created_at",
+              perPage: 100,
+            })
+          : Promise.resolve({ items: [] as BorrowRequest[] }),
+        itemIdFilter
+          ? ayb.records.list<Loan>("loans", {
+              filter: `(${itemIdFilter}) AND (status='active' OR status='late')`,
+              sort: "-created_at",
+              perPage: 100,
+            })
+          : Promise.resolve({ items: [] as Loan[] }),
       ]);
 
-      // Filter to only items in owned libraries
-      const ownedItems = itemRes.items.filter((i) => ownedLibIds.has(i.library_id));
-      setItems(ownedItems);
-
-      const ownedItemIds = new Set(ownedItems.map((i) => i.id));
-      const ownedRequests = reqRes.items.filter((r) => ownedItemIds.has(r.item_id));
-      const ownedLoans = loanRes.items.filter((l) => ownedItemIds.has(l.item_id));
-      setRequests(ownedRequests);
-      setLoans(ownedLoans);
+      setRequests(reqRes.items);
+      setLoans(loanRes.items);
 
       const borrowerIds = new Set<string>();
-      ownedRequests.forEach((r) => borrowerIds.add(r.borrower_id));
-      ownedLoans.forEach((l) => borrowerIds.add(l.borrower_id));
+      reqRes.items.forEach((r) => borrowerIds.add(r.borrower_id));
+      loanRes.items.forEach((l) => borrowerIds.add(l.borrower_id));
       if (borrowerIds.size > 0) {
         const filter = [...borrowerIds].map((id) => `id='${id}'`).join(" OR ");
         const borRes = await ayb.records.list<Borrower>("borrowers", { filter, perPage: 500 });
