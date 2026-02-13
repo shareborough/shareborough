@@ -58,7 +58,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     };
 
     // 3. Create a library
-    const libRes = await fetch(`${apiBase}/api/records/libraries`, {
+    const libRes = await fetch(`${apiBase}/api/collections/libraries`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -76,7 +76,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     const itemNames = ["Hammer", "Screwdriver Set", "Tape Measure", "Wrench Set"];
     itemIds = [];
     for (const name of itemNames) {
-      const res = await fetch(`${apiBase}/api/records/items`, {
+      const res = await fetch(`${apiBase}/api/collections/items`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -92,7 +92,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     }
 
     // 5. Create borrower for loan
-    const borRes = await fetch(`${apiBase}/api/records/borrowers`, {
+    const borRes = await fetch(`${apiBase}/api/collections/borrowers`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -105,7 +105,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     borrowerId = bor.id;
 
     // 6. Create second borrower for pending request
-    const bor2Res = await fetch(`${apiBase}/api/records/borrowers`, {
+    const bor2Res = await fetch(`${apiBase}/api/collections/borrowers`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -118,7 +118,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     borrower2Id = bor2.id;
 
     // 7. Create a pending borrow request on item[1] (Screwdriver Set)
-    const reqRes = await fetch(`${apiBase}/api/records/borrow_requests`, {
+    const reqRes = await fetch(`${apiBase}/api/collections/borrow_requests`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -134,7 +134,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
 
     // 8. Create an active loan on item[0] (Hammer)
     const returnBy = new Date(Date.now() + 7 * 86400000).toISOString();
-    const loanRes = await fetch(`${apiBase}/api/records/loans`, {
+    const loanRes = await fetch(`${apiBase}/api/collections/loans`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -149,7 +149,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     loanId = loan.id;
 
     // Mark the loaned item as borrowed
-    const patchRes = await fetch(`${apiBase}/api/records/items/${itemIds[0]}`, {
+    const patchRes = await fetch(`${apiBase}/api/collections/items/${itemIds[0]}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({ status: "borrowed" }),
@@ -175,14 +175,14 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     }
 
     // Delete in reverse dependency order: loans → requests → items → borrowers → library
-    if (loanId) await apiDelete(`/api/records/loans/${loanId}`);
-    if (requestId) await apiDelete(`/api/records/borrow_requests/${requestId}`);
+    if (loanId) await apiDelete(`/api/collections/loans/${loanId}`);
+    if (requestId) await apiDelete(`/api/collections/borrow_requests/${requestId}`);
     for (const itemId of itemIds) {
-      await apiDelete(`/api/records/items/${itemId}`);
+      await apiDelete(`/api/collections/items/${itemId}`);
     }
-    if (borrowerId) await apiDelete(`/api/records/borrowers/${borrowerId}`);
-    if (borrower2Id) await apiDelete(`/api/records/borrowers/${borrower2Id}`);
-    if (libraryId) await apiDelete(`/api/records/libraries/${libraryId}`);
+    if (borrowerId) await apiDelete(`/api/collections/borrowers/${borrowerId}`);
+    if (borrower2Id) await apiDelete(`/api/collections/borrowers/${borrower2Id}`);
+    if (libraryId) await apiDelete(`/api/collections/libraries/${libraryId}`);
 
     console.log(`Cleanup: deleted all test data for ${email}`);
   });
