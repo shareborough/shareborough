@@ -22,6 +22,7 @@ vi.mock("../src/lib/ayb", () => ({
     },
   },
   isLoggedIn: () => mockLoggedIn,
+  currentUserId: () => "test-user-id",
 }));
 
 const mockRpc = vi.fn();
@@ -108,58 +109,52 @@ const ACTIVE_LOAN = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Sets up mockList to return empty data for all four parallel fetches
- * (borrow_requests, loans, items, libraries), and no borrowers follow-up.
+ * Sets up mockList for the sequential loading pattern:
+ * libraries (empty) → early return (no items/requests/loans fetched).
  */
 function setupEmpty() {
-  // borrow_requests
+  // Step 1: libraries — empty → triggers early return
   mockList.mockResolvedValueOnce({ items: [] });
-  // loans
-  mockList.mockResolvedValueOnce({ items: [] });
-  // items
-  mockList.mockResolvedValueOnce({ items: [] });
-  // libraries
-  mockList.mockResolvedValueOnce({ items: [] });
-  // No borrowers call because both request and loan lists are empty
 }
 
 /**
- * Sets up mockList to return a pending request, overdue loan, active loan,
- * items, libraries, and borrowers.
+ * Sets up mockList for the sequential loading pattern:
+ * libraries → items → requests+loans (parallel) → borrowers.
  */
 function setupWithData() {
-  // borrow_requests
-  mockList.mockResolvedValueOnce({ items: [PENDING_REQUEST] });
-  // loans
-  mockList.mockResolvedValueOnce({ items: [OVERDUE_LOAN, ACTIVE_LOAN] });
-  // items
-  mockList.mockResolvedValueOnce({ items: ITEMS });
-  // libraries
+  // Step 1: libraries
   mockList.mockResolvedValueOnce({ items: LIBRARIES });
-  // borrowers (called because requests and loans have borrower_ids)
+  // Step 2: items
+  mockList.mockResolvedValueOnce({ items: ITEMS });
+  // Step 3: borrow_requests + loans (parallel)
+  mockList.mockResolvedValueOnce({ items: [PENDING_REQUEST] });
+  mockList.mockResolvedValueOnce({ items: [OVERDUE_LOAN, ACTIVE_LOAN] });
+  // Step 4: borrowers
   mockList.mockResolvedValueOnce({ items: BORROWERS });
 }
 
 /**
  * Sets up data with only pending requests (no loans).
+ * Sequential: libraries → items → requests+loans → borrowers.
  */
 function setupWithRequestsOnly() {
-  mockList.mockResolvedValueOnce({ items: [PENDING_REQUEST] });
+  mockList.mockResolvedValueOnce({ items: LIBRARIES }); // libraries
+  mockList.mockResolvedValueOnce({ items: ITEMS }); // items
+  mockList.mockResolvedValueOnce({ items: [PENDING_REQUEST] }); // requests
   mockList.mockResolvedValueOnce({ items: [] }); // loans
-  mockList.mockResolvedValueOnce({ items: ITEMS });
-  mockList.mockResolvedValueOnce({ items: LIBRARIES });
-  mockList.mockResolvedValueOnce({ items: BORROWERS }); // borrowers for request
+  mockList.mockResolvedValueOnce({ items: BORROWERS }); // borrowers
 }
 
 /**
  * Sets up data with only loans (no pending requests).
+ * Sequential: libraries → items → requests+loans → borrowers.
  */
 function setupWithLoansOnly() {
-  mockList.mockResolvedValueOnce({ items: [] }); // requests
-  mockList.mockResolvedValueOnce({ items: [OVERDUE_LOAN, ACTIVE_LOAN] });
-  mockList.mockResolvedValueOnce({ items: ITEMS });
-  mockList.mockResolvedValueOnce({ items: LIBRARIES });
-  mockList.mockResolvedValueOnce({ items: BORROWERS }); // borrowers for loans
+  mockList.mockResolvedValueOnce({ items: LIBRARIES }); // libraries
+  mockList.mockResolvedValueOnce({ items: ITEMS }); // items
+  mockList.mockResolvedValueOnce({ items: [] }); // requests (empty)
+  mockList.mockResolvedValueOnce({ items: [OVERDUE_LOAN, ACTIVE_LOAN] }); // loans
+  mockList.mockResolvedValueOnce({ items: BORROWERS }); // borrowers
 }
 
 /* ------------------------------------------------------------------ */
@@ -481,11 +476,12 @@ describe("Notifications", () => {
 
   it("removes returned loan from the list after confirm", async () => {
     // Only one overdue loan, no active loans, no requests
-    mockList.mockResolvedValueOnce({ items: [] }); // requests
+    // Sequential: libraries → items → requests+loans → borrowers
+    mockList.mockResolvedValueOnce({ items: LIBRARIES }); // libraries
+    mockList.mockResolvedValueOnce({ items: ITEMS }); // items
+    mockList.mockResolvedValueOnce({ items: [] }); // requests (empty)
     mockList.mockResolvedValueOnce({ items: [OVERDUE_LOAN] }); // loans — just the overdue one
-    mockList.mockResolvedValueOnce({ items: ITEMS });
-    mockList.mockResolvedValueOnce({ items: LIBRARIES });
-    mockList.mockResolvedValueOnce({ items: BORROWERS });
+    mockList.mockResolvedValueOnce({ items: BORROWERS }); // borrowers
     mockRpc.mockResolvedValueOnce({});
 
     renderWithProviders(<Notifications />);

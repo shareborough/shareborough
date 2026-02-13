@@ -14,6 +14,7 @@ vi.mock("../src/lib/ayb", () => ({
     },
   },
   isLoggedIn: () => true,
+  currentUserId: () => "test-user-id",
 }));
 
 const mockRpc = vi.fn();
@@ -31,20 +32,12 @@ vi.mock("react-router-dom", async () => {
 });
 
 function setupEmptyDashboard() {
-  // libraries
-  mockList.mockResolvedValueOnce({ items: [] });
-  // active loans
-  mockList.mockResolvedValueOnce({ items: [] });
-  // all loans (for stats)
-  mockList.mockResolvedValueOnce({ items: [] });
-  // items
-  mockList.mockResolvedValueOnce({ items: [] });
-  // borrow_requests
+  // Step 1: libraries → returns empty → early return
   mockList.mockResolvedValueOnce({ items: [] });
 }
 
 function setupDashboardWithData() {
-  // libraries
+  // Step 1: libraries (filtered by owner_id)
   mockList.mockResolvedValueOnce({
     items: [
       {
@@ -56,7 +49,14 @@ function setupDashboardWithData() {
       },
     ],
   });
-  // active loans
+  // Step 2: items (filtered by library_id)
+  mockList.mockResolvedValueOnce({
+    items: [
+      { id: "item-1", library_id: "lib-1", name: "Drill", status: "available" },
+      { id: "item-2", library_id: "lib-1", name: "Saw", status: "borrowed" },
+    ],
+  });
+  // Step 3 (parallel): active loans (filtered by item_id)
   mockList.mockResolvedValueOnce({
     items: [
       {
@@ -68,7 +68,7 @@ function setupDashboardWithData() {
       },
     ],
   });
-  // all loans (for stats)
+  // Step 3 (parallel): all loans (filtered by item_id)
   mockList.mockResolvedValueOnce({
     items: [
       {
@@ -85,16 +85,9 @@ function setupDashboardWithData() {
       },
     ],
   });
-  // items
-  mockList.mockResolvedValueOnce({
-    items: [
-      { id: "item-1", library_id: "lib-1", name: "Drill", status: "available" },
-      { id: "item-2", library_id: "lib-1", name: "Saw", status: "borrowed" },
-    ],
-  });
-  // borrow_requests
+  // Step 3 (parallel): borrow_requests (filtered by item_id)
   mockList.mockResolvedValueOnce({ items: [] });
-  // borrowers (loaded after items because of borrower IDs)
+  // Step 4: borrowers (loaded after loans)
   mockList.mockResolvedValueOnce({
     items: [
       { id: "bor-1", name: "Alice", phone: "+15551111111" },
@@ -145,9 +138,15 @@ describe("Dashboard", () => {
   });
 
   it("shows overdue highlighting for late loans", async () => {
-    // libraries
-    mockList.mockResolvedValueOnce({ items: [] });
-    // loans — one overdue
+    // Step 1: libraries
+    mockList.mockResolvedValueOnce({
+      items: [{ id: "lib-1", name: "Tools", slug: "tools", description: null, is_public: true }],
+    });
+    // Step 2: items (filtered by library_id)
+    mockList.mockResolvedValueOnce({
+      items: [{ id: "item-1", library_id: "lib-1", name: "Overdue Drill", status: "borrowed" }],
+    });
+    // Step 3 (parallel): active loans (filtered by item_id)
     mockList.mockResolvedValueOnce({
       items: [
         {
@@ -159,7 +158,7 @@ describe("Dashboard", () => {
         },
       ],
     });
-    // all loans (for stats)
+    // Step 3 (parallel): all loans (filtered by item_id)
     mockList.mockResolvedValueOnce({
       items: [
         {
@@ -170,13 +169,9 @@ describe("Dashboard", () => {
         },
       ],
     });
-    // items
-    mockList.mockResolvedValueOnce({
-      items: [{ id: "item-1", library_id: "lib-1", name: "Overdue Drill", status: "borrowed" }],
-    });
-    // borrow_requests
+    // Step 3 (parallel): borrow_requests
     mockList.mockResolvedValueOnce({ items: [] });
-    // borrowers
+    // Step 4: borrowers
     mockList.mockResolvedValueOnce({
       items: [{ id: "bor-1", name: "Late Larry", phone: "+15553333333" }],
     });
@@ -200,7 +195,7 @@ describe("Dashboard", () => {
   });
 
   it("does not show stats when library has no loans", async () => {
-    // libraries
+    // Step 1: libraries
     mockList.mockResolvedValueOnce({
       items: [
         {
@@ -212,15 +207,15 @@ describe("Dashboard", () => {
         },
       ],
     });
-    // active loans
-    mockList.mockResolvedValueOnce({ items: [] });
-    // all loans (for stats) — none
-    mockList.mockResolvedValueOnce({ items: [] });
-    // items
+    // Step 2: items (filtered by library_id)
     mockList.mockResolvedValueOnce({
       items: [{ id: "item-1", library_id: "lib-1", name: "Untouched Item", status: "available" }],
     });
-    // borrow_requests
+    // Step 3 (parallel): active loans
+    mockList.mockResolvedValueOnce({ items: [] });
+    // Step 3 (parallel): all loans — none
+    mockList.mockResolvedValueOnce({ items: [] });
+    // Step 3 (parallel): borrow_requests
     mockList.mockResolvedValueOnce({ items: [] });
 
     renderWithProviders(<Dashboard />);
@@ -231,31 +226,31 @@ describe("Dashboard", () => {
   });
 
   it("shows singular 'friend' when only one borrower", async () => {
-    // libraries
+    // Step 1: libraries
     mockList.mockResolvedValueOnce({
       items: [
         { id: "lib-1", name: "Solo Library", slug: "solo", description: null, is_public: true },
       ],
     });
-    // active loans
-    mockList.mockResolvedValueOnce({ items: [] });
-    // all loans — 2 loans but same borrower
-    mockList.mockResolvedValueOnce({
-      items: [
-        { id: "loan-1", item_id: "item-1", borrower_id: "bor-1", status: "returned" },
-        { id: "loan-2", item_id: "item-2", borrower_id: "bor-1", status: "returned" },
-      ],
-    });
-    // items
+    // Step 2: items (filtered by library_id)
     mockList.mockResolvedValueOnce({
       items: [
         { id: "item-1", library_id: "lib-1", name: "Item A", status: "available" },
         { id: "item-2", library_id: "lib-1", name: "Item B", status: "available" },
       ],
     });
-    // borrow_requests
+    // Step 3 (parallel): active loans
     mockList.mockResolvedValueOnce({ items: [] });
-    // borrowers (bor-1 from allLoans)
+    // Step 3 (parallel): all loans — 2 loans but same borrower
+    mockList.mockResolvedValueOnce({
+      items: [
+        { id: "loan-1", item_id: "item-1", borrower_id: "bor-1", status: "returned" },
+        { id: "loan-2", item_id: "item-2", borrower_id: "bor-1", status: "returned" },
+      ],
+    });
+    // Step 3 (parallel): borrow_requests
+    mockList.mockResolvedValueOnce({ items: [] });
+    // Step 4: borrowers (bor-1 from allLoans)
     mockList.mockResolvedValueOnce({
       items: [{ id: "bor-1", name: "Solo Friend", phone: "+15551111111" }],
     });
