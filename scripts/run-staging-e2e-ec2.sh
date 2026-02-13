@@ -119,6 +119,7 @@ log "=========================================="
 
 export STAGING_URL
 export VITE_AYB_URL="${VITE_AYB_URL:-https://api.shareborough.com}"
+export AYB_URL="${AYB_URL:-${VITE_AYB_URL}}"
 
 # Mailpail config for email e2e tests
 export MAILPAIL_DOMAIN="test.shareborough.com"

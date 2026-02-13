@@ -20,3 +20,7 @@ ayb_storage/
 # Editor
 *.swp
 *.swo
+
+# Secrets and credentials
+.secret/
+scripts/diagnose.ts

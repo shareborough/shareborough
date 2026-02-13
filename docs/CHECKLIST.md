@@ -97,6 +97,22 @@
 - [x] Fix borrow.ts Unauthorized handling + CodeSplitting test mock (Session 022)
 - [x] Test user seeding — 7 test accounts (sigil.app + short) seeded to production (Session 020)
 - [x] README with phone testing — PWA install instructions, test accounts table, "Things to Try" guide (Session 020)
+- [x] Notifications page — pending requests, overdue loans, active loans, approve/decline/return (Session 023)
+- [x] Notification bell — real-time badge count, dropdown with pending/overdue summary (Session 023)
+- [x] Camera fix — `capture="environment"` attribute on photo input for mobile camera (Session 023)
+- [x] Smoke CRUD e2e test — full lifecycle: library create, item add, borrow, return, cleanup (Session 023)
+- [x] Delete library — cascading delete of all items + library with confirm dialog (Session 024)
+- [x] Edit item page — edit name, description, photo, facets with pre-populated form (Session 024)
+- [x] Image URL resolution — `resolveImageUrl()` helper for relative /api/ paths (Session 024)
+- [x] ResponsiveImage fix — consistent URL resolution across all image components (Session 024)
+- [x] CI pipeline OOM fix — `--max-old-space-size=4096` for EC2 builds (Session 024)
+- [x] Test quality audit fixes — skeleton false positives, missing coverage gaps (Session 025)
+- [x] Notifications.test.tsx — 17 unit tests covering all Notifications page behaviors (Session 025)
+- [x] EditItem.test.tsx — 28 unit tests covering all EditItem page behaviors (Session 025)
+- [x] BEHAVIORS.md updates — Notifications, Edit Item, Delete Library, Test Coverage Matrix (Session 025)
+- [x] Notifications approve bug fix — loan now added to state immediately after approval (Session 026)
+- [x] Notifications realtime fix — loan "create" events now handled (Session 026)
+- [x] E2E fixes: comprehensive golden path, borrow-flow decline, smoke-crud bell, golden-path settings, dark-mode persistence (Session 026)
 
 ## Phase 8: Deployment & CI/CD
 
@@ -123,6 +139,32 @@
 - [ ] **Republish SDK** — add proper type exports for `signInWithOAuth` + `deleteAccount` to `@allyourbase/js`
 - [ ] **Clean up allyourbase_dev** — remove original `examples/shareborough/`
 
+## Phase 10: Session 027 — Run Tracker, Pre-Seeded Data, Dashboard Overflow, Unit Preferences
+
+- [x] Fix global-setup.ts — scope cleanup to test users only (preserves seed data)
+- [x] Enhance seed.ts — rich content for alice/bob (libraries, items, loans, borrowers, requests)
+- [x] Create diagnostic API script — `scripts/diagnose.ts` (API health + integrity checks)
+- [x] Install leaflet + react-leaflet — map dependencies for run tracker
+- [x] Create geo.ts — GPS math utilities (haversine, pace, speed, filtering, formatting)
+- [x] Create units.ts — unit conversion utilities (metric/imperial)
+- [x] Create useGps hook — GPS tracking via `navigator.geolocation.watchPosition`
+- [x] Create RunMap component — Leaflet map with route polyline + position marker
+- [x] Create RunStats component — live stats overlay (distance, duration, pace, speed)
+- [x] Create RunTracker page — state machine (idle/running/paused/finished)
+- [x] Add `/dashboard/run` route + NavBar "Run" link
+- [x] Create UnitContext — metric/imperial preference context with localStorage persistence
+- [x] Add unit toggle to Settings page — between Theme and Danger Zone sections
+- [x] Create CollapsibleSection component — reusable truncation/collapse with persistence
+- [x] Refactor Dashboard — priority ordering, overflow protection, pending requests section
+- [x] Refactor Notifications — CollapsibleSection wrapping with maxItems
+- [x] Unit tests: geo.test.ts (28), units.test.ts (6), RunTracker.test.tsx (10), CollapsibleSection.test.tsx (10)
+- [x] Update Dashboard.test.tsx — add borrow_requests mock to all setups
+- [x] Update Settings.test.tsx — add unit_system to save assertions
+- [x] Create returning-user e2e tests — e2e/returning-user.spec.ts (5 scenarios)
+- [x] Create run-tracker e2e tests — e2e/run-tracker.spec.ts (6 scenarios)
+- [x] Update BEHAVIORS.md — Run Tracker, Unit Preferences, Dashboard Density, Returning User sections
+- [x] Create session checklist + handoff doc
+
 ## Priority Queue (next up)
 
 1. **Accessibility audit** — WCAG 2.1 AA compliance pass
@@ -132,20 +174,20 @@
 5. **Republish SDK** — proper type exports for signInWithOAuth + deleteAccount
 6. **Staging CNAME** — `staging.shareborough.com` → Cloudflare Pages staging branch
 
-## Current Status (Session 022)
+## Current Status (Session 027)
 
 - Backend API: LIVE at api.shareborough.com
 - Frontend: Deployed to Cloudflare Pages via GitHub Actions CI/CD
 - Production: https://shareborough.com (Cloudflare Pages, `main` branch)
 - Staging: https://staging.shareborough.pages.dev (Cloudflare Pages, `staging` branch)
-- Seed data: Auto-created on deploy (demo@shareborough.com / demo1234) + 7 test users
-- Tests: 580+ unit tests passing across 47 vitest files, ~116 Playwright E2E tests across 16 spec files
+- Seed data: Auto-created on deploy (demo@shareborough.com / demo1234) + 7 test users + rich content for alice/bob
+- Tests: 700+ unit tests passing across 54+ vitest files, ~130 Playwright E2E tests across 19 spec files
 - E2E: Run on EC2 via `launch-ec2-tests.sh`, results → `s3://ayb-ci-artifacts/e2e-runs/`
 - Deploy pipeline:
   - `./scripts/sync-and-deploy.sh "message"` — full pipeline (staging → EC2 E2E → prod)
   - `./scripts/sync-and-deploy.sh "message" --staging-only` — staging only
   - `./scripts/sync-and-deploy.sh "message" --prod-only` — skip staging E2E
-- Session 022: Fixed Cloudflare deploy auth, staging-first pipeline, test fixes (borrow.ts + CodeSplitting)
+- Session 027: Run Tracker with GPS map, unit preferences, dashboard overflow protection, returning-user e2e tests, diagnostic script
 
 ## Known Issues
 
@@ -157,4 +199,4 @@
 
 ## Latest Session Checklist
 
-See [docs/SESSION-022-CHECKLIST.md](./SESSION-022-CHECKLIST.md)
+See [docs/SESSION-027-CHECKLIST.md](./SESSION-027-CHECKLIST.md)

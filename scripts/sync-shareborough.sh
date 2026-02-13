@@ -38,7 +38,7 @@ mkdir -p "$PUB_REPO/scripts"
 cp "$DEV_REPO/scripts/seed.ts" "$PUB_REPO/scripts/seed.ts"
 
 # Root config files (copy individually)
-for file in index.html package.json package-lock.json vite.config.ts tsconfig.json \
+for file in index.html package.json package-lock.json .npmrc vite.config.ts tsconfig.json \
             postcss.config.js tailwind.config.js playwright.config.ts \
             playwright.config.prod.ts playwright.config.staging.ts \
             schema.sql .env.production README.md; do

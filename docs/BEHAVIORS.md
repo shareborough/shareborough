@@ -81,12 +81,13 @@ This document defines the expected user workflows and behaviors. Each behavior s
 ### 2.1 NavBar (authenticated pages)
 - Logo links to `/dashboard`
 - "My Libraries" link visible in header, links to `/dashboard`
+- "Run" link visible in header, links to `/dashboard/run`
 - Avatar button opens dropdown menu
 - Dropdown shows: user email, "My Libraries", "Settings", separator, "Sign out"
 - Dropdown closes on: click outside, Escape key, selecting an item, clicking avatar again
 
 ### 2.2 Auth Guards
-- `/dashboard`, `/dashboard/library/:id`, `/dashboard/library/:id/add`, `/dashboard/settings` → redirect to `/login` if not authenticated
+- `/dashboard`, `/dashboard/library/:id`, `/dashboard/library/:id/add`, `/dashboard/settings`, `/dashboard/run` → redirect to `/login` if not authenticated
 - `/login`, `/signup` → redirect to `/dashboard` if already authenticated
 
 ### 2.3 Top Navigation Buttons (Unauthenticated)
@@ -120,7 +121,21 @@ This document defines the expected user workflows and behaviors. Each behavior s
 - Stats count all loans (active + returned) per library
 - "Friends helped" counts unique borrowers, uses singular "friend" for 1
 - Stats section hidden when library has zero loans
+- Libraries truncated to 6 by default, "Show all N libraries" button for expansion
 - "Create Library" button opens modal
+
+### 3.1a Dashboard Information Density
+- **Priority ordering**: Pending Requests → Overdue → Active Loans → Libraries
+- **Pending Requests** section (top priority): blue highlight, max 3 shown, "View all" links to Notifications
+- **Overdue** section: red highlight, max 3 shown, "View all" links to Notifications
+- **Active Loans** ("Currently Borrowed"): max 5 shown, "View all" links to Notifications
+- **Libraries**: max 6 shown, "Show all N libraries" button for inline expansion
+- **CollapsibleSection** component wraps each section:
+  - Header with title, count badge, chevron toggle
+  - Truncation at maxItems with "View all N →" link
+  - Collapse/expand state persisted to localStorage
+  - Returns null when section has no items (no empty headers)
+- Expected outcome: dashboard stays clean even with many items/loans/requests
 
 ### 3.2 Create Library
 - Modal with: name, description, cover photo (optional)
@@ -128,17 +143,45 @@ This document defines the expected user workflows and behaviors. Each behavior s
 - On success: library created, modal closes, list refreshed
 - On failure: error shown in modal
 
-### 3.3 Pending Requests
-- Shows borrow requests awaiting action
-- Each shows: item name, borrower name, message
-- "Approve" button → opens date picker for return date → creates loan
-- "Decline" button → declines request
+### 3.3 Notifications Page (`/dashboard/notifications`)
+- Accessed via NotificationBell dropdown or direct navigation
+- Back link to Dashboard at top
+- Shows "All caught up!" empty state when no pending requests or active loans
+- **Pending Requests** section:
+  - Shows borrow requests awaiting action
+  - Each shows: borrower name, "wants to borrow", item name
+  - Optional: return date and message from borrower
+  - "Approve" button → calls `approve_borrow` RPC with 14-day default return date → schedules reminders → shows "Request approved" toast
+  - "Decline" button → opens confirm dialog → updates request status to "declined" → shows "Request declined" toast
+- **Overdue** section (red highlighting):
+  - Shows loans past due date with red border
+  - Each shows: item name, borrower name, days overdue count
+  - "Mark Returned" button with confirm dialog
+- **Currently Borrowed** section:
+  - Shows active non-overdue loans
+  - Each shows: item name, borrower name, days until due
+  - "Due today" shown in amber for same-day returns
+  - "Mark Returned" button → confirm dialog → calls `return_item` RPC → shows "Item marked as returned" toast
+- **Realtime updates**: New borrow requests appear via SSE without page refresh
+- Expected outcome: Owner manages all lending activity from one page
 
-### 3.4 Active Loans
-- Shows items currently on loan
+### 3.4 Notification Bell (NavBar)
+- Bell icon in NavBar for authenticated users
+- Badge count shows pending requests + overdue loans
+- Dropdown shows notification list with type indicator (blue dot = request, red dot = overdue)
+- "All caught up!" when no notifications
+- Each notification links to `/dashboard/notifications`
+- "View all notifications" link at bottom when items exist
+- Dropdown closes on: click outside, Escape key, clicking a notification
+- Realtime updates: new requests increment badge immediately
+- Expected outcome: Quick overview of pending actions without leaving current page
+
+### 3.5 Active Loans (Dashboard)
+- Dashboard shows "Currently Borrowed" section with active loans
 - Each shows: item name, borrower, due date, status
-- Overdue items highlighted, day counter shown
-- "Mark Returned" button → marks loan as returned, item back to available
+- Overdue items highlighted with red border and day counter
+- "Mark Returned" button → confirm dialog → RPC → toast
+- "Late" badge shown for overdue items
 
 ---
 
@@ -153,6 +196,27 @@ This document defines the expected user workflows and behaviors. Each behavior s
 ### 4.2 Facet Definitions
 - Owner can create custom metadata fields (text, number, boolean)
 - Fields appear when adding items
+
+### 4.3 Edit Item (`/dashboard/library/:id/edit/:itemId`)
+- "Edit" link on each item card in library detail (visible on hover for desktop, always visible on mobile)
+- Loads existing item data: name, description, photo, max borrow period, facet values
+- Photo preview shows resolved URL (relative `/api/` paths resolved to backend `VITE_AYB_URL`)
+- Can change photo (camera or gallery), crop, and upload new photo
+- "Save Changes" button updates item via `ayb.records.update`
+- Facet values: deletes old values, creates new ones
+- Shows "Saving..." state during submission
+- On success: toast "Item updated", navigate back to library detail
+- On failure: inline error message + error toast
+- Back link to library detail
+- Expected outcome: Owner can edit any item's details and photo
+
+### 4.4 Delete Library
+- "Delete Library" button in library detail header (red text, subtle styling)
+- Confirm dialog warns about deleting library + all items (shows item count)
+- Deletes all items first (FK constraint handling), then deletes library
+- On success: toast "Library deleted", navigate to dashboard
+- On failure: error toast
+- Expected outcome: Complete library removal with safety confirmation
 
 ---
 
@@ -259,7 +323,19 @@ This document defines the expected user workflows and behaviors. Each behavior s
 - Handles missing `user_profiles` table gracefully (empty form, no crash)
 - Footer visible at bottom
 
-### 9.2 404 Not Found
+### 9.2 Unit Preferences
+- **Units section** in Settings page (between Theme and Danger Zone)
+- Two options: "Imperial (mi, lb)" and "Metric (km, kg)"
+- Default: Imperial
+- Toggled via radio-style buttons (same styling as Theme toggle)
+- Persisted to localStorage (`unit_system` key) for immediate effect
+- Saved to `user_profiles.unit_system` column on profile save
+- Loaded from profile on Settings page mount
+- UnitContext provides `unitSystem` and `setUnitSystem` to all components
+- Used by RunTracker stats (distance, pace, speed labels)
+- Expected outcome: user's preferred units persist across sessions and apply everywhere
+
+### 9.3 404 Not Found
 - Unknown routes display "404 — Page not found" with description
 - "Go Home" link navigates to `/`
 - Works for both authenticated and unauthenticated users
@@ -426,6 +502,71 @@ This document defines the expected user workflows and behaviors. Each behavior s
 
 ---
 
+## 12. Run Tracker (`/dashboard/run`)
+
+### 12.1 GPS Tracking
+- Uses `navigator.geolocation.watchPosition` for real-time GPS
+- Accuracy filter: readings with accuracy > 30m are ignored
+- Error handling: permission denied, position unavailable, timeout — each shows specific error message
+- Graceful degradation: shows error when geolocation not supported
+- Cleanup: watch cleared on component unmount
+
+### 12.2 Map Display
+- Leaflet map with OpenStreetMap tiles (no API key required)
+- Current position shown as blue circle marker with white border
+- Route drawn as sage-green polyline (weight 4, semi-transparent)
+- Auto-follows current position while tracking
+- "Re-center" button appears when user pans away manually
+- Default center: NYC (40.7128, -74.0060) when no GPS position available
+- Dark mode tile variant (CartoDB dark matter)
+- Mobile-optimized: full width, touch gestures enabled
+
+### 12.3 Stats Display
+- 2×2 grid showing: Distance, Duration, Pace, Speed
+- Distance: uses unit preference (mi or km), formatted to 2 decimal places
+- Duration: HH:MM:SS format, updated every second
+- Pace: min/mi or min/km, shown as M:SS format (requires >10m distance)
+- Speed: mph or km/h, formatted to 1 decimal place (requires >10m distance)
+- Shows "--" placeholders when idle or no data available
+- Updates live as GPS data streams in
+
+### 12.4 Run State Machine
+- States: idle → running → paused → finished
+- **Idle**: "Start Run" button, hint text with runner emoji
+- **Running**: "Pause" and "Finish" buttons, timer and GPS active
+- **Paused**: "Resume" and "Finish" buttons, timer paused, GPS still receiving (but not recording to track)
+- **Finished**: "Run Complete!" summary with GPS point count, "New Run" button
+- **New Run**: resets all state to idle
+
+### 12.5 Timer
+- Timer tracks elapsed time excluding paused durations
+- Uses `setInterval` at 1s resolution
+- Pause time accumulated via refs (not affected by re-renders)
+- Timer stops on Finish or component unmount
+
+### 12.6 Route
+- Accessible from NavBar "Run" link (authenticated only)
+- Auth guard: redirects to `/login` if not authenticated
+- Lazy-loaded route (code splitting)
+
+---
+
+## 13. Returning User Data
+
+### 13.1 Pre-existing Data Loading
+- Dashboard loads all libraries, items, loans, and borrow requests on mount
+- Pre-seeded data (from seed.ts or prior sessions) displays correctly
+- Library cards show accurate item counts
+- Active loans display in "Currently Borrowed" section
+- Cross-session: data persists after logout + re-login
+
+### 13.2 Test Data Isolation
+- E2E global-setup only cleans data from `test-%@example.com` users
+- Seed users (`@sigil.app`, `@shareborough.com`) are preserved across test runs
+- Each e2e test creates its own data via API in beforeAll (self-contained)
+
+---
+
 ## Test Coverage Matrix
 
 | Behavior | Component Test | E2E Test | Production E2E | Status |
@@ -485,3 +626,31 @@ This document defines the expected user workflows and behaviors. Each behavior s
 | Dark mode persistence | ThemeContext.test.tsx | dark-mode.spec.ts | Covered |
 | Dark mode system preference | ThemeContext.test.tsx | dark-mode.spec.ts | Covered |
 | Dark mode settings UI | ThemeContext.test.tsx | dark-mode.spec.ts | Covered |
+| Theme section in settings | Settings.test.tsx | dark-mode.spec.ts | Covered |
+| Settings save success toast | Settings.test.tsx | comprehensive.spec.ts | Covered |
+| Notifications page | Notifications.test.tsx | golden-path.spec.ts, comprehensive.spec.ts | Covered |
+| Notification bell | NavBar.test.tsx | smoke-crud.spec.ts | Covered |
+| Pending request approve | Notifications.test.tsx | golden-path.spec.ts, borrow-flow.spec.ts | Covered |
+| Pending request decline | Notifications.test.tsx | borrow-flow.spec.ts | Covered |
+| Overdue loan display | Notifications.test.tsx, Dashboard.test.tsx | — | Covered |
+| Mark returned (notifications) | Notifications.test.tsx | golden-path.spec.ts | Covered |
+| Edit item | EditItem.test.tsx | smoke-crud.spec.ts | Covered |
+| Edit item photo resolution | EditItem.test.tsx | — | Covered |
+| Delete library | LibraryDetail.test.tsx | smoke-crud.spec.ts | Covered |
+| Dashboard load error | Dashboard.test.tsx | — | Covered |
+| Dashboard skeleton shimmer | Dashboard.test.tsx | golden-path.spec.ts | Covered |
+| LibraryDetail skeleton shimmer | LibraryDetail.test.tsx | — | Covered |
+| Run Tracker map + GPS | RunTracker.test.tsx | run-tracker.spec.ts | Covered |
+| Run Tracker state machine | RunTracker.test.tsx | run-tracker.spec.ts | Covered |
+| Run Tracker stats display | RunTracker.test.tsx | run-tracker.spec.ts | Covered |
+| GPS tracking hook | RunTracker.test.tsx | run-tracker.spec.ts | Covered |
+| Geo math utilities | geo.test.ts | — | Covered |
+| Unit conversions | units.test.ts | — | Covered |
+| Unit preference setting | Settings.test.tsx | run-tracker.spec.ts | Covered |
+| Dashboard overflow protection | Dashboard.test.tsx, CollapsibleSection.test.tsx | — | Covered |
+| CollapsibleSection | CollapsibleSection.test.tsx | — | Covered |
+| Notifications overflow | Notifications.test.tsx | — | Covered |
+| Returning user data | — | returning-user.spec.ts | Covered |
+| Cross-session persistence | — | returning-user.spec.ts | Covered |
+| Pre-existing loan display | Dashboard.test.tsx | returning-user.spec.ts | Covered |
+| Test data isolation | — | returning-user.spec.ts | Covered |

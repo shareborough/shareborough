@@ -120,7 +120,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
       body: JSON.stringify({
         item_id: itemIds[1],
         borrower_id: borrower2Id,
-        message: "Can I borrow the screwdriver set?",
+        message: "Can I borrow this for the weekend?",
         status: "pending",
       }),
     });
@@ -213,7 +213,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     await login(page);
 
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Screwdriver Set")).toBeVisible();
+    await expect(page.getByText("Screwdriver Set").first()).toBeVisible();
   });
 
   test("library detail shows pre-existing items with status badges", async ({ page }) => {
@@ -280,7 +280,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible({ timeout: 10000 });
 
     // Pending request should show
-    await expect(page.getByText("Screwdriver Set")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Screwdriver Set").first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Friend Carol")).toBeVisible();
 
     // Approve it
