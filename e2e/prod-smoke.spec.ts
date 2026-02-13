@@ -74,8 +74,9 @@ test.describe("Prod Smoke Tests", () => {
     await page.getByRole("button", { name: "Save Changes" }).click();
     await expect(page.getByText("Smoke Item Updated")).toBeVisible({ timeout: 10000 });
 
-    // Delete item
-    await page.getByText("Delete").first().click();
+    // Delete item — scope to item card to avoid matching "Delete Library"
+    const itemCard = page.locator(".card", { hasText: "Smoke Item Updated" });
+    await itemCard.getByRole("button", { name: "Delete" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText("Smoke Item Updated")).not.toBeVisible({ timeout: 5000 });
 

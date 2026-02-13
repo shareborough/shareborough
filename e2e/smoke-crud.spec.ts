@@ -42,8 +42,9 @@ test.describe("CRUD Smoke Test", () => {
     await expect(page.getByText("Updated Widget")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Updated description")).toBeVisible();
 
-    // 6. Delete item
-    await page.getByText("Delete").first().click();
+    // 6. Delete item — scope to item card to avoid matching "Delete Library"
+    const itemCard = page.locator(".card", { hasText: "Updated Widget" });
+    await itemCard.getByRole("button", { name: "Delete" }).click();
     // Confirm in dialog
     await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText("Updated Widget")).not.toBeVisible({ timeout: 5000 });

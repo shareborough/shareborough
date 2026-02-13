@@ -237,8 +237,9 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     await login(page);
     await expect(page.getByText(`Returning User Tools ${runId}`)).toBeVisible();
 
-    // Clear cookies to simulate session expiry
+    // Clear all storage to simulate session expiry
     await context.clearCookies();
+    await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
 
     // Re-login
     await login(page);
