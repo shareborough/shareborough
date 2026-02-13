@@ -1,0 +1,15 @@
+# Shareborough — AYB configuration
+# Auth must be enabled for owner login/signup to work.
+
+[auth]
+enabled = true
+jwt_secret = "335a31bdc9ed53956d4bd88e24c8d693e635c765afc66af5e3bbc38c125fcedf"
+
+[admin]
+enabled = true
+password = "shareborough-local"
+
+[storage]
+enabled = true
+backend = "local"
+local_path = "./ayb_storage"
