@@ -76,12 +76,12 @@ test.describe("Prod Smoke Tests", () => {
 
     // Delete item
     await page.getByText("Delete").first().click();
-    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText("Smoke Item Updated")).not.toBeVisible({ timeout: 5000 });
 
     // Delete library
     await page.getByText("Delete Library").click();
-    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
     await expect(page).toHaveURL(/dashboard/, { timeout: 10000 });
     await expect(page.getByText(libName)).not.toBeVisible({ timeout: 5000 });
   });

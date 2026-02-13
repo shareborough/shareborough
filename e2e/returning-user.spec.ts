@@ -78,7 +78,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
         body: JSON.stringify({
           library_id: libraryId,
           name,
-          description: `Pre-existing ${name.toLowerCase()}`,
+          description: "A pre-existing tool for e2e testing",
           status: "available",
         }),
       });
