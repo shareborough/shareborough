@@ -41,28 +41,24 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
       body: JSON.stringify({ email, password }),
     });
     expect(regRes.ok, `Registration failed: ${regRes.status}`).toBeTruthy();
-
-    // 2. Login to get token
-    const loginRes = await fetch(`${apiBase}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    expect(loginRes.ok, `Login failed: ${loginRes.status}`).toBeTruthy();
-    const loginData = (await loginRes.json()) as { token: string };
-    authToken = loginData.token;
+    const regData = (await regRes.json()) as { token: string; user: { id: string } };
+    authToken = regData.token;
+    const userId = regData.user.id;
 
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authToken}`,
     };
 
-    // 3. Create a library
+    // 2. Create a library (must include owner_id and slug like the frontend does)
+    const slug = `returning-user-${runId}`;
     const libRes = await fetch(`${apiBase}/api/collections/libraries`, {
       method: "POST",
       headers,
       body: JSON.stringify({
+        owner_id: userId,
         name: `Returning User Tools ${runId}`,
+        slug,
         description: "A library with pre-existing content for e2e testing",
         is_public: true,
       }),
@@ -72,7 +68,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     libraryId = lib.id;
     librarySlug = lib.slug;
 
-    // 4. Create items (4 items: one for loan, one for request, one to delete, one to keep)
+    // 3. Create items (4 items: one for loan, one for request, one to delete, one to keep)
     const itemNames = ["Hammer", "Screwdriver Set", "Tape Measure", "Wrench Set"];
     itemIds = [];
     for (const name of itemNames) {
@@ -91,7 +87,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
       itemIds.push(item.id);
     }
 
-    // 5. Create borrower for loan
+    // 4. Create borrower for loan
     const borRes = await fetch(`${apiBase}/api/collections/borrowers`, {
       method: "POST",
       headers,
@@ -104,7 +100,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     const bor = (await borRes.json()) as { id: string };
     borrowerId = bor.id;
 
-    // 6. Create second borrower for pending request
+    // 5. Create second borrower for pending request
     const bor2Res = await fetch(`${apiBase}/api/collections/borrowers`, {
       method: "POST",
       headers,
@@ -117,7 +113,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     const bor2 = (await bor2Res.json()) as { id: string };
     borrower2Id = bor2.id;
 
-    // 7. Create a pending borrow request on item[1] (Screwdriver Set)
+    // 6. Create a pending borrow request on item[1] (Screwdriver Set)
     const reqRes = await fetch(`${apiBase}/api/collections/borrow_requests`, {
       method: "POST",
       headers,
@@ -132,7 +128,7 @@ test.describe("Returning User — Pre-existing Data CRUD", () => {
     const req = (await reqRes.json()) as { id: string };
     requestId = req.id;
 
-    // 8. Create an active loan on item[0] (Hammer)
+    // 7. Create an active loan on item[0] (Hammer)
     const returnBy = new Date(Date.now() + 7 * 86400000).toISOString();
     const loanRes = await fetch(`${apiBase}/api/collections/loans`, {
       method: "POST",
