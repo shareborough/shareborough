@@ -35,6 +35,7 @@ vi.mock("../src/lib/ayb", () => ({
     token: "mock.jwt.token",
   },
   isLoggedIn: () => true,
+  currentUserId: () => "test-user-id",
   persistTokens: vi.fn(),
   clearPersistedTokens: vi.fn(),
 }));

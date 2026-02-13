@@ -117,7 +117,6 @@ describe("Settings", () => {
       expect(mockUpdate).toHaveBeenCalledWith("user_profiles", "p1", {
         display_name: "Alice Updated",
         phone: null,
-        unit_system: "imperial",
       });
     });
   });
@@ -139,7 +138,6 @@ describe("Settings", () => {
       expect(mockCreate).toHaveBeenCalledWith("user_profiles", {
         display_name: "New User",
         phone: null,
-        unit_system: "imperial",
         user_id: "user-1",
       });
     });
