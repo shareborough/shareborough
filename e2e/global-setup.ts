@@ -1,7 +1,7 @@
 /**
  * Global setup: clean test data before each Playwright run.
- * Since all libraries are public (visible to all users), stale data from
- * previous runs causes name collisions and strict mode violations.
+ * Only cleans data belonging to ephemeral test users (test-*@example.com).
+ * Seed user data (@sigil.app, @shareborough.com) is preserved.
  */
 export default async function globalSetup() {
   const baseURL = process.env.AYB_URL ?? "http://localhost:8090";
@@ -33,36 +33,51 @@ export default async function globalSetup() {
     Authorization: `Bearer ${adminToken}`,
   };
 
-  // Use the admin SQL endpoint to clean test data.
-  // Tables are deleted in dependency order (children first).
-  const tables = [
-    "reminders",
-    "loans",
-    "borrow_requests",
-    "borrowers",
-    "item_facets",
-    "items",
-    "facet_definitions",
-    "libraries",
+  // Scoped cleanup: only delete content owned by ephemeral test users.
+  // Subqueries cascade through the ownership chain:
+  //   test users → libraries → items → loans/requests/facets/reminders
+  const testUserSub = `(SELECT id FROM _ayb_users WHERE email LIKE 'test-%@example.com')`;
+  const testLibSub = `(SELECT id FROM libraries WHERE owner_id IN ${testUserSub})`;
+  const testItemSub = `(SELECT id FROM items WHERE library_id IN ${testLibSub})`;
+  const testLoanSub = `(SELECT id FROM loans WHERE item_id IN ${testItemSub})`;
+
+  // Tables cleaned in dependency order (children first).
+  const cleanupQueries = [
+    `DELETE FROM reminders WHERE loan_id IN ${testLoanSub}`,
+    `DELETE FROM loans WHERE item_id IN ${testItemSub}`,
+    `DELETE FROM borrow_requests WHERE item_id IN ${testItemSub}`,
+    `DELETE FROM item_facets WHERE item_id IN ${testItemSub}`,
+    `DELETE FROM items WHERE library_id IN ${testLibSub}`,
+    `DELETE FROM facet_definitions WHERE library_id IN ${testLibSub}`,
+    // Clean borrowers linked to test-user items via loans or requests
+    `DELETE FROM borrowers WHERE id IN (
+      SELECT DISTINCT borrower_id FROM loans WHERE item_id IN ${testItemSub}
+      UNION
+      SELECT DISTINCT borrower_id FROM borrow_requests WHERE item_id IN ${testItemSub}
+    )`,
+    `DELETE FROM libraries WHERE owner_id IN ${testUserSub}`,
   ];
 
-  for (const table of tables) {
+  for (const query of cleanupQueries) {
     const res = await fetch(`${baseURL}/api/admin/sql`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ query: `DELETE FROM ${table}` }),
+      body: JSON.stringify({ query }),
     });
     if (res.ok) {
       const data = (await res.json()) as { rowCount: number };
       if (data.rowCount > 0) {
+        // Extract table name from query for logging
+        const table = query.match(/DELETE FROM (\w+)/)?.[1] ?? "unknown";
         console.log(`  Cleaned ${data.rowCount} rows from ${table}`);
       }
     } else {
+      const table = query.match(/DELETE FROM (\w+)/)?.[1] ?? "unknown";
       console.warn(`  Warning: could not clean table ${table}: ${res.status}`);
     }
   }
 
-  // Also clean test users (emails matching test pattern)
+  // Clean test users themselves (emails matching test pattern)
   const res = await fetch(`${baseURL}/api/admin/sql`, {
     method: "POST",
     headers,

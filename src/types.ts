@@ -111,6 +111,7 @@ export interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  unit_system: "metric" | "imperial" | null;
   created_at: string;
   updated_at: string;
 }

@@ -62,8 +62,10 @@ test.describe("CRUD Smoke Test", () => {
     const bellButton = page.getByLabel(/Notifications/);
     await expect(bellButton).toBeVisible();
 
-    // Click opens dropdown
+    // Click opens dropdown — verify it shows either empty state or notifications
     await bellButton.click();
-    await expect(page.getByText("All caught up!")).toBeVisible();
+    await expect(
+      page.getByText("All caught up!").or(page.getByText("View all notifications"))
+    ).toBeVisible({ timeout: 5000 });
   });
 });

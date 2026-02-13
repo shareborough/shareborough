@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ayb, isLoggedIn } from "../lib/ayb";
+import { ayb, isLoggedIn, currentUserId } from "../lib/ayb";
 import { rpc } from "../lib/rpc";
 import { friendlyError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
 import { useRealtime, type RealtimeEvent } from "../hooks/useRealtime";
-import type { Library, Loan, Item, Borrower } from "../types";
+import type { Library, Loan, Item, Borrower, BorrowRequest } from "../types";
 import CreateLibrary from "../components/CreateLibrary";
+import CollapsibleSection from "../components/CollapsibleSection";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Skeleton from "../components/Skeleton";
 import Footer from "../components/Footer";
@@ -19,7 +20,9 @@ export default function Dashboard() {
   const [allLoans, setAllLoans] = useState<Loan[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [borrowers, setBorrowers] = useState<Map<string, Borrower>>(new Map());
+  const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAllLibs, setShowAllLibs] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [dialog, setDialog] = useState<{
@@ -42,8 +45,23 @@ export default function Dashboard() {
   async function loadAll() {
     setLoadError(false);
     try {
-      const [libRes, loanRes, allLoanRes, itemRes] = await Promise.all([
-        ayb.records.list<Library>("libraries", { sort: "-created_at", perPage: 100 }),
+      const userId = currentUserId();
+
+      // First, load only libraries owned by the current user.
+      // Without this filter, public_read RLS policies leak other users' public data
+      // onto the dashboard, and the user cannot modify items they don't own.
+      const libFilter = userId ? `owner_id='${userId}'` : undefined;
+      const libRes = await ayb.records.list<Library>("libraries", {
+        filter: libFilter,
+        sort: "-created_at",
+        perPage: 100,
+      });
+      setLibraries(libRes.items);
+
+      // Build a set of owned library IDs to filter items/loans to only owned data
+      const ownedLibIds = new Set(libRes.items.map((l) => l.id));
+
+      const [loanRes, allLoanRes, itemRes, reqRes] = await Promise.all([
         ayb.records.list<Loan>("loans", {
           filter: "status='active' OR status='late'",
           sort: "-created_at",
@@ -51,15 +69,27 @@ export default function Dashboard() {
         }),
         ayb.records.list<Loan>("loans", { perPage: 500, skipTotal: true }),
         ayb.records.list<Item>("items", { perPage: 500, skipTotal: true }),
+        ayb.records.list<BorrowRequest>("borrow_requests", {
+          filter: "status='pending'",
+          sort: "-created_at",
+          perPage: 100,
+        }),
       ]);
-      setLibraries(libRes.items);
-      setLoans(loanRes.items);
-      setAllLoans(allLoanRes.items);
-      setItems(itemRes.items);
 
-      // Load borrowers for all loans
+      // Filter items to only those belonging to owned libraries
+      const ownedItems = itemRes.items.filter((i) => ownedLibIds.has(i.library_id));
+      setItems(ownedItems);
+
+      // Filter loans/requests to only those referencing owned items
+      const ownedItemIds = new Set(ownedItems.map((i) => i.id));
+      setLoans(loanRes.items.filter((l) => ownedItemIds.has(l.item_id)));
+      const ownedAllLoans = allLoanRes.items.filter((l) => ownedItemIds.has(l.item_id));
+      setAllLoans(ownedAllLoans);
+      setRequests(reqRes.items.filter((r) => ownedItemIds.has(r.item_id)));
+
+      // Load borrowers for owned loans
       const borrowerIds = new Set<string>();
-      allLoanRes.items.forEach((l) => borrowerIds.add(l.borrower_id));
+      ownedAllLoans.forEach((l) => borrowerIds.add(l.borrower_id));
       if (borrowerIds.size > 0) {
         const filter = [...borrowerIds].map((id) => `id='${id}'`).join(" OR ");
         const borRes = await ayb.records.list<Borrower>("borrowers", {
@@ -100,9 +130,19 @@ export default function Dashboard() {
         setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
       }
     }
+    if (event.table === "borrow_requests") {
+      const req = event.record as unknown as BorrowRequest;
+      if (event.action === "create" && req.status === "pending") {
+        setRequests((prev) => prev.find((r) => r.id === req.id) ? prev : [req, ...prev]);
+      } else if (event.action === "update") {
+        if (req.status !== "pending") {
+          setRequests((prev) => prev.filter((r) => r.id !== req.id));
+        }
+      }
+    }
   }, []);
 
-  useRealtime(["loans", "items"], handleRealtime);
+  useRealtime(["loans", "items", "borrow_requests"], handleRealtime);
 
   async function handleReturn(loanId: string) {
     setDialog({
@@ -208,48 +248,99 @@ export default function Dashboard() {
     friendsByLibrary.get(libId)!.add(loan.borrower_id);
   });
 
+  const overdueLoans = loans.filter((l) => isOverdue(l));
+  const activeLoans = loans.filter((l) => !isOverdue(l));
+
+  function renderLoanCard(loan: Loan) {
+    const overdue = isOverdue(loan);
+    const days = daysUntilDue(loan);
+    return (
+      <div key={loan.id} className={`card p-3 sm:p-4 ${overdue ? "border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/20" : ""}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+          <div className="min-w-0">
+            <span className="font-medium">{getItemName(loan.item_id)}</span>
+            <span className="text-gray-400 dark:text-gray-500 mx-2">&rarr;</span>
+            <span className="text-gray-600 dark:text-gray-300">{getBorrowerName(loan.borrower_id)}</span>
+            {days !== null && (
+              <span className={`text-sm ml-2 ${overdue ? "text-red-600 font-medium" : "text-gray-400 dark:text-gray-500"}`}>
+                {overdue
+                  ? `${Math.abs(days)} day${Math.abs(days) !== 1 ? "s" : ""} overdue`
+                  : days === 0
+                    ? "Due today"
+                    : `Due in ${days} day${days !== 1 ? "s" : ""}`}
+              </span>
+            )}
+            {overdue && <span className="badge-late ml-2">Late</span>}
+          </div>
+          <button onClick={() => handleReturn(loan.id)} className="btn-secondary text-xs px-3 py-2 min-h-[40px] shrink-0 self-start sm:self-auto">
+            Mark Returned
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <main className="max-w-4xl mx-auto p-4 sm:p-6">
-        {loans.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-              Currently Borrowed
-              <span className="badge-borrowed">{loans.length}</span>
-            </h2>
-            <div className="flex flex-col gap-2">
-              {loans.map((loan) => {
-                const overdue = isOverdue(loan);
-                const days = daysUntilDue(loan);
-                return (
-                  <div key={loan.id} className={`card p-3 sm:p-4 ${overdue ? "border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/20" : ""}`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                      <div className="min-w-0">
-                        <span className="font-medium">{getItemName(loan.item_id)}</span>
-                        <span className="text-gray-400 dark:text-gray-500 mx-2">&rarr;</span>
-                        <span className="text-gray-600 dark:text-gray-300">{getBorrowerName(loan.borrower_id)}</span>
-                        {days !== null && (
-                          <span className={`text-sm ml-2 ${overdue ? "text-red-600 font-medium" : "text-gray-400 dark:text-gray-500"}`}>
-                            {overdue
-                              ? `${Math.abs(days)} day${Math.abs(days) !== 1 ? "s" : ""} overdue`
-                              : days === 0
-                                ? "Due today"
-                                : `Due in ${days} day${days !== 1 ? "s" : ""}`}
-                          </span>
-                        )}
-                        {overdue && <span className="badge-late ml-2">Late</span>}
-                      </div>
-                      <button onClick={() => handleReturn(loan.id)} className="btn-secondary text-xs px-3 py-2 min-h-[40px] shrink-0 self-start sm:self-auto">
-                        Mark Returned
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+        {/* Pending Requests (highest priority) */}
+        <CollapsibleSection
+          title="Pending Requests"
+          count={requests.length}
+          badgeClass="badge bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+          maxItems={3}
+          totalItems={requests.length}
+          viewAllLink="/dashboard/notifications"
+          persistKey="dash-requests"
+        >
+          {requests.map((req) => (
+            <div key={req.id} className="card p-3 sm:p-4 border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/20">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                <div className="min-w-0">
+                  <span className="text-gray-600 dark:text-gray-300">Someone wants to borrow</span>
+                  <span className="font-medium ml-1">{getItemName(req.item_id)}</span>
+                  {req.message && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic line-clamp-1">"{req.message}"</p>
+                  )}
+                </div>
+                <Link
+                  to="/dashboard/notifications"
+                  className="btn-primary text-xs px-3 py-2 min-h-[40px] shrink-0 self-start sm:self-auto text-center"
+                >
+                  Review
+                </Link>
+              </div>
             </div>
-          </section>
-        )}
+          ))}
+        </CollapsibleSection>
 
+        {/* Overdue Loans */}
+        <CollapsibleSection
+          title="Overdue"
+          count={overdueLoans.length}
+          badgeClass="badge-late"
+          maxItems={3}
+          totalItems={overdueLoans.length}
+          viewAllLink="/dashboard/notifications"
+          persistKey="dash-overdue"
+        >
+          {overdueLoans.map(renderLoanCard)}
+        </CollapsibleSection>
+
+        {/* Active Loans */}
+        <CollapsibleSection
+          title="Currently Borrowed"
+          count={activeLoans.length}
+          badgeClass="badge-borrowed"
+          maxItems={5}
+          totalItems={activeLoans.length}
+          viewAllLink="/dashboard/notifications"
+          persistKey="dash-active"
+        >
+          {activeLoans.map(renderLoanCard)}
+        </CollapsibleSection>
+
+        {/* Libraries */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">My Libraries</h2>
@@ -275,7 +366,7 @@ export default function Dashboard() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {libraries.map((lib) => (
+            {libraries.slice(0, showAllLibs ? undefined : 6).map((lib) => (
               <Link key={lib.id} to={`/dashboard/library/${lib.id}`} className="card p-5 hover:shadow-md transition-shadow group">
                 <div className="flex items-start justify-between">
                   <div>
@@ -311,6 +402,15 @@ export default function Dashboard() {
               </Link>
             ))}
           </div>
+          {!showAllLibs && libraries.length > 6 && (
+            <button
+              type="button"
+              onClick={() => setShowAllLibs(true)}
+              className="mt-4 text-sm text-sage-600 dark:text-sage-400 hover:underline"
+            >
+              Show all {libraries.length} libraries
+            </button>
+          )}
         </section>
       </main>
 

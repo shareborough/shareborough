@@ -555,6 +555,27 @@ describe("AddItem", () => {
       expect((screen.getByPlaceholderText("What is this item?") as HTMLInputElement).value).toBe("");
     });
 
+    it("disables scan button and shows loading text during barcode lookup", async () => {
+      setupLibraryLoad();
+      // Make formatBarcodeResult hang to observe loading state
+      mockFormatBarcodeResult.mockReturnValueOnce(new Promise(() => {}));
+
+      renderWithProviders(<AddItem />);
+
+      await screen.findByRole("heading", { name: "Add Item" });
+      fireEvent.click(screen.getByRole("button", { name: /Scan Barcode/i }));
+
+      // Simulate barcode scan
+      fireEvent.click(screen.getByText("Simulate Scan"));
+
+      // Scanner should close, scan button should show loading state
+      await waitFor(() => {
+        const scanBtn = screen.getByText("Looking up barcode...");
+        expect(scanBtn).toBeInTheDocument();
+        expect(scanBtn.closest("button")).toBeDisabled();
+      });
+    });
+
     it("closes scanner when cancel clicked", async () => {
       setupLibraryLoad();
 

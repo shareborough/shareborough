@@ -25,6 +25,7 @@ test.describe("Mobile Responsiveness", () => {
     // Verify minimum touch target size (44px)
     const getStarted = page.getByRole("link", { name: "Get Started" });
     const box = await getStarted.boundingBox();
+    expect(box).toBeTruthy();
     expect(box!.height).toBeGreaterThanOrEqual(44);
   });
 
@@ -38,6 +39,7 @@ test.describe("Mobile Responsiveness", () => {
     // Verify inputs are fully visible within viewport
     const emailInput = page.getByPlaceholder("Email");
     const inputBox = await emailInput.boundingBox();
+    expect(inputBox).toBeTruthy();
     const viewport = page.viewportSize()!;
     expect(inputBox!.x).toBeGreaterThanOrEqual(0);
     expect(inputBox!.x + inputBox!.width).toBeLessThanOrEqual(viewport.width);
@@ -52,6 +54,7 @@ test.describe("Mobile Responsiveness", () => {
     await expect(libraryCard).toBeVisible();
 
     const cardBox = await libraryCard.boundingBox();
+    expect(cardBox).toBeTruthy();
     const viewport = page.viewportSize()!;
     expect(cardBox!.width).toBeLessThanOrEqual(viewport.width);
   });
@@ -69,6 +72,8 @@ test.describe("Mobile Responsiveness", () => {
     // Both should fit within viewport
     const cameraBox = await page.locator('label:has-text("Camera")').boundingBox();
     const galleryBox = await page.locator('label:has-text("Gallery")').boundingBox();
+    expect(cameraBox).toBeTruthy();
+    expect(galleryBox).toBeTruthy();
     const viewport = page.viewportSize()!;
     expect(cameraBox!.x + cameraBox!.width).toBeLessThanOrEqual(viewport.width);
     expect(galleryBox!.x + galleryBox!.width).toBeLessThanOrEqual(viewport.width);

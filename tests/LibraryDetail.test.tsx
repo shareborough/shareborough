@@ -72,13 +72,17 @@ describe("LibraryDetail", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/login");
   });
 
-  it("renders skeleton loading state initially", () => {
+  it("renders skeleton loading state with shimmer elements", () => {
     mockGet.mockReturnValue(new Promise(() => {}));
     mockList.mockReturnValue(new Promise(() => {}));
 
     renderWithProviders(<LibraryDetail />);
 
-    expect(screen.getByLabelText("Loading library")).toBeInTheDocument();
+    const skeleton = screen.getByLabelText("Loading library");
+    expect(skeleton).toBeInTheDocument();
+    // Verify actual skeleton shimmer elements render (not just the aria-label container)
+    const shimmers = skeleton.querySelectorAll(".skeleton-shimmer");
+    expect(shimmers.length).toBeGreaterThanOrEqual(3);
   });
 
   it("renders library not found when get fails", async () => {
@@ -252,6 +256,46 @@ describe("LibraryDetail", () => {
 
     await screen.findByText("Power Tools");
     expect(screen.getByText("Brand")).toBeInTheDocument();
+  });
+
+  it("deletes library and navigates to dashboard when confirmed", async () => {
+    setupLibrary([
+      { id: "item-1", library_id: "lib-1", name: "Tool", status: "available", photo_url: null },
+    ]);
+    mockDelete.mockResolvedValue(undefined);
+
+    renderWithProviders(<LibraryDetail />);
+
+    await screen.findByText("Power Tools");
+    fireEvent.click(screen.getByText("Delete Library"));
+
+    // ConfirmDialog should appear with library name and item count
+    expect(await screen.findByText(/Delete "Power Tools" and all 1 item/)).toBeInTheDocument();
+
+    // Confirm delete
+    const dialogButtons = screen.getAllByRole("button", { name: "Delete" });
+    fireEvent.click(dialogButtons[dialogButtons.length - 1]);
+
+    await waitFor(() => {
+      // Should delete item first, then library
+      expect(mockDelete).toHaveBeenCalledWith("items", "item-1");
+      expect(mockDelete).toHaveBeenCalledWith("libraries", "lib-1");
+    });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    });
+  });
+
+  it("shows edit link for items", async () => {
+    setupLibrary([
+      { id: "item-1", library_id: "lib-1", name: "Drill", status: "available", photo_url: null },
+    ]);
+
+    renderWithProviders(<LibraryDetail />);
+
+    await screen.findByText("Drill");
+    const editLink = screen.getByText("Edit");
+    expect(editLink.closest("a")).toHaveAttribute("href", "/dashboard/library/lib-1/edit/item-1");
   });
 
   it("shows Add Facet form when clicked", async () => {

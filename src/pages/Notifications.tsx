@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ayb, isLoggedIn } from "../lib/ayb";
+import { ayb, isLoggedIn, currentUserId } from "../lib/ayb";
 import { rpc } from "../lib/rpc";
 import { friendlyError } from "../lib/errorMessages";
 import { useToast } from "../hooks/useToast";
 import { scheduleReminders } from "../lib/reminders";
 import { useRealtime, type RealtimeEvent } from "../hooks/useRealtime";
 import type { Library, BorrowRequest, Loan, Item, Borrower } from "../types";
+import CollapsibleSection from "../components/CollapsibleSection";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Skeleton from "../components/Skeleton";
 import Footer from "../components/Footer";
@@ -39,7 +40,20 @@ export default function Notifications() {
 
   async function loadAll() {
     try {
-      const [reqRes, loanRes, itemRes, libRes] = await Promise.all([
+      const userId = currentUserId();
+
+      // Load owned libraries first, then filter everything else to owned data.
+      // Without this, public_read RLS policies leak other users' data here.
+      const libFilter = userId ? `owner_id='${userId}'` : undefined;
+      const libRes = await ayb.records.list<Library>("libraries", {
+        filter: libFilter,
+        perPage: 100,
+      });
+      setLibraries(libRes.items);
+
+      const ownedLibIds = new Set(libRes.items.map((l) => l.id));
+
+      const [reqRes, loanRes, itemRes] = await Promise.all([
         ayb.records.list<BorrowRequest>("borrow_requests", {
           filter: "status='pending'",
           sort: "-created_at",
@@ -51,16 +65,21 @@ export default function Notifications() {
           perPage: 100,
         }),
         ayb.records.list<Item>("items", { perPage: 500, skipTotal: true }),
-        ayb.records.list<Library>("libraries", { perPage: 100 }),
       ]);
-      setRequests(reqRes.items);
-      setLoans(loanRes.items);
-      setItems(itemRes.items);
-      setLibraries(libRes.items);
+
+      // Filter to only items in owned libraries
+      const ownedItems = itemRes.items.filter((i) => ownedLibIds.has(i.library_id));
+      setItems(ownedItems);
+
+      const ownedItemIds = new Set(ownedItems.map((i) => i.id));
+      const ownedRequests = reqRes.items.filter((r) => ownedItemIds.has(r.item_id));
+      const ownedLoans = loanRes.items.filter((l) => ownedItemIds.has(l.item_id));
+      setRequests(ownedRequests);
+      setLoans(ownedLoans);
 
       const borrowerIds = new Set<string>();
-      reqRes.items.forEach((r) => borrowerIds.add(r.borrower_id));
-      loanRes.items.forEach((l) => borrowerIds.add(l.borrower_id));
+      ownedRequests.forEach((r) => borrowerIds.add(r.borrower_id));
+      ownedLoans.forEach((l) => borrowerIds.add(l.borrower_id));
       if (borrowerIds.size > 0) {
         const filter = [...borrowerIds].map((id) => `id='${id}'`).join(" OR ");
         const borRes = await ayb.records.list<Borrower>("borrowers", { filter, perPage: 500 });
@@ -91,7 +110,11 @@ export default function Notifications() {
     }
     if (event.table === "loans") {
       const loan = event.record as unknown as Loan;
-      if (event.action === "update") {
+      if (event.action === "create") {
+        setLoans((prev) =>
+          prev.find((l) => l.id === loan.id) ? prev : [loan, ...prev],
+        );
+      } else if (event.action === "update") {
         if (loan.status === "returned") {
           setLoans((prev) => prev.filter((l) => l.id !== loan.id));
         } else {
@@ -130,6 +153,10 @@ export default function Notifications() {
       }
 
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
+      // Add the new loan to state so "Currently Borrowed" appears immediately
+      if (loan) {
+        setLoans((prev) => prev.find((l) => l.id === loan.id) ? prev : [loan, ...prev]);
+      }
       toast.showSuccess("Request approved", "The borrower will be notified.");
     } catch (err) {
       const { message } = friendlyError(err);
@@ -233,13 +260,14 @@ export default function Notifications() {
           </div>
         )}
 
-        {requests.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              Pending Requests
-              <span className="badge-pending">{requests.length}</span>
-            </h2>
-            <div className="flex flex-col gap-2">
+        <CollapsibleSection
+          title="Pending Requests"
+          count={requests.length}
+          badgeClass="badge-pending"
+          maxItems={10}
+          totalItems={requests.length}
+          persistKey="notif-requests"
+        >
               {requests.map((req) => (
                 <div key={req.id} className="card p-3 sm:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
@@ -267,17 +295,16 @@ export default function Notifications() {
                   </div>
                 </div>
               ))}
-            </div>
-          </section>
-        )}
+        </CollapsibleSection>
 
-        {overdueLoans.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
-              Overdue
-              <span className="badge-late">{overdueLoans.length}</span>
-            </h2>
-            <div className="flex flex-col gap-2">
+        <CollapsibleSection
+          title="Overdue"
+          count={overdueLoans.length}
+          badgeClass="badge-late"
+          maxItems={10}
+          totalItems={overdueLoans.length}
+          persistKey="notif-overdue"
+        >
               {overdueLoans.map((loan) => {
                 const days = daysUntilDue(loan);
                 return (
@@ -300,17 +327,16 @@ export default function Notifications() {
                   </div>
                 );
               })}
-            </div>
-          </section>
-        )}
+        </CollapsibleSection>
 
-        {activeLoans.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              Currently Borrowed
-              <span className="badge-borrowed">{activeLoans.length}</span>
-            </h2>
-            <div className="flex flex-col gap-2">
+        <CollapsibleSection
+          title="Currently Borrowed"
+          count={activeLoans.length}
+          badgeClass="badge-borrowed"
+          maxItems={10}
+          totalItems={activeLoans.length}
+          persistKey="notif-active"
+        >
               {activeLoans.map((loan) => {
                 const days = daysUntilDue(loan);
                 return (
@@ -333,9 +359,7 @@ export default function Notifications() {
                   </div>
                 );
               })}
-            </div>
-          </section>
-        )}
+        </CollapsibleSection>
       </main>
 
       <Footer />

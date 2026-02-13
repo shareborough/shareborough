@@ -117,6 +117,7 @@ describe("Settings", () => {
       expect(mockUpdate).toHaveBeenCalledWith("user_profiles", "p1", {
         display_name: "Alice Updated",
         phone: null,
+        unit_system: "imperial",
       });
     });
   });
@@ -138,6 +139,7 @@ describe("Settings", () => {
       expect(mockCreate).toHaveBeenCalledWith("user_profiles", {
         display_name: "New User",
         phone: null,
+        unit_system: "imperial",
         user_id: "user-1",
       });
     });
@@ -196,6 +198,31 @@ describe("Settings", () => {
     expect(screen.getByLabelText("Display name")).toHaveValue("");
     // Verify the API was actually called (not just testing initial state)
     expect(mockList).toHaveBeenCalled();
+  });
+
+  // ========== Theme Section ==========
+
+  it("renders Theme section with Light, Dark, System buttons", async () => {
+    renderWithProviders(<Settings />);
+    expect(await screen.findByText("Theme")).toBeInTheDocument();
+    expect(screen.getByText("Choose how Shareborough looks to you")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Light" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dark" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "System" })).toBeInTheDocument();
+  });
+
+  it("shows success toast on save", async () => {
+    mockList.mockResolvedValue({
+      items: [{ id: "p1", display_name: "Alice", phone: "" }],
+    });
+    mockUpdate.mockResolvedValue({});
+
+    renderWithProviders(<Settings />);
+    await screen.findByText("Save Changes");
+
+    fireEvent.submit(screen.getByText("Save Changes").closest("form")!);
+
+    expect(await screen.findByText("Settings saved")).toBeInTheDocument();
   });
 
   // ========== Account Deletion ==========

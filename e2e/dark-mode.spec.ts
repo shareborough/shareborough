@@ -42,7 +42,9 @@ test.describe("Dark Mode — Theme Toggle & Persistence", () => {
 
     // Navigate to settings
     await page.goto("/dashboard/settings");
-    await page.waitForLoadState("networkidle");
+
+    // Wait for Settings page to load (replaces networkidle which hangs with SSE)
+    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({ timeout: 10000 });
 
     // Dark class should still be applied after navigation
     await expect(page.locator("html")).toHaveClass(/dark/);
@@ -64,7 +66,9 @@ test.describe("Dark Mode — Theme Toggle & Persistence", () => {
 
     // Reload the page
     await page.reload();
-    await page.waitForLoadState("networkidle");
+
+    // Wait for dashboard to load (replaces networkidle which hangs with SSE)
+    await expect(page.getByRole("heading", { name: "My Libraries" })).toBeVisible({ timeout: 15000 });
 
     // Dark class should be applied immediately (FOUC prevention script)
     await expect(page.locator("html")).toHaveClass(/dark/);

@@ -30,6 +30,15 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   { pattern: "Item is not available for borrowing", userMessage: "This item is no longer available for borrowing. Someone may have just borrowed it." },
   { pattern: "Failed to create borrower record", userMessage: "We couldn't save your information. Please try again." },
 
+  // RPC function errors (from RAISE EXCEPTION in PL/pgSQL, now returned via P0001 handling)
+  { pattern: "Only the library owner can mark returns", userMessage: "You can only mark returns for items in your own libraries." },
+  { pattern: "Only the library owner can approve", userMessage: "You can only approve requests for items in your own libraries." },
+  { pattern: "Loan not found", userMessage: "This loan could not be found. It may have already been returned." },
+  { pattern: "Request not found", userMessage: "This request could not be found. It may have already been handled." },
+  { pattern: "Request is not pending", userMessage: "This request has already been approved or declined." },
+  { pattern: "Item already returned", userMessage: "This item has already been marked as returned." },
+  { pattern: "record not found", userMessage: "This item could not be found. It may have been deleted." },
+
   // Database constraint errors from AYB
   { pattern: "unique constraint", userMessage: "This already exists. Please use a different name or value." },
   { pattern: /NOT NULL.*violation/i, userMessage: "A required field is missing. Please fill in all required fields." },

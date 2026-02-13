@@ -104,6 +104,9 @@ test.describe("Borrow Flow", () => {
     const requestCard = page.locator(".card").filter({ hasText: "Charlie Cancel" });
     await requestCard.getByRole("button", { name: "Decline" }).click();
 
+    // Confirm in the ConfirmDialog modal
+    await page.getByRole("dialog").getByRole("button", { name: "Decline" }).click();
+
     // That specific request should disappear
     await expect(requestCard).not.toBeVisible({ timeout: 5000 });
   });

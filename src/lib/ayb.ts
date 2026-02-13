@@ -27,6 +27,22 @@ export function isLoggedIn(): boolean {
 }
 
 /**
+ * Extract the current user's ID from the JWT token.
+ * Returns null if no token or invalid token.
+ */
+export function currentUserId(): string | null {
+  if (!ayb.token) return null;
+  try {
+    const parts = ayb.token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Validate the current session against the server.
  * Called once on app mount to catch expired/invalid tokens.
  */

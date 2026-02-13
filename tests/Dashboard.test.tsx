@@ -39,6 +39,8 @@ function setupEmptyDashboard() {
   mockList.mockResolvedValueOnce({ items: [] });
   // items
   mockList.mockResolvedValueOnce({ items: [] });
+  // borrow_requests
+  mockList.mockResolvedValueOnce({ items: [] });
 }
 
 function setupDashboardWithData() {
@@ -90,6 +92,8 @@ function setupDashboardWithData() {
       { id: "item-2", library_id: "lib-1", name: "Saw", status: "borrowed" },
     ],
   });
+  // borrow_requests
+  mockList.mockResolvedValueOnce({ items: [] });
   // borrowers (loaded after items because of borrower IDs)
   mockList.mockResolvedValueOnce({
     items: [
@@ -104,12 +108,16 @@ describe("Dashboard", () => {
     vi.clearAllMocks();
   });
 
-  it("renders skeleton loading state initially", () => {
+  it("renders skeleton loading state with shimmer elements", () => {
     mockList.mockReturnValue(new Promise(() => {}));
 
     renderWithProviders(<Dashboard />);
 
-    expect(screen.getByLabelText("Loading dashboard")).toBeInTheDocument();
+    const skeleton = screen.getByLabelText("Loading dashboard");
+    expect(skeleton).toBeInTheDocument();
+    // Verify actual skeleton shimmer elements render (not just the aria-label container)
+    const shimmers = skeleton.querySelectorAll(".skeleton-shimmer");
+    expect(shimmers.length).toBeGreaterThanOrEqual(4);
   });
 
   it("renders empty state with create prompt", async () => {
@@ -166,6 +174,8 @@ describe("Dashboard", () => {
     mockList.mockResolvedValueOnce({
       items: [{ id: "item-1", library_id: "lib-1", name: "Overdue Drill", status: "borrowed" }],
     });
+    // borrow_requests
+    mockList.mockResolvedValueOnce({ items: [] });
     // borrowers
     mockList.mockResolvedValueOnce({
       items: [{ id: "bor-1", name: "Late Larry", phone: "+15553333333" }],
@@ -210,6 +220,8 @@ describe("Dashboard", () => {
     mockList.mockResolvedValueOnce({
       items: [{ id: "item-1", library_id: "lib-1", name: "Untouched Item", status: "available" }],
     });
+    // borrow_requests
+    mockList.mockResolvedValueOnce({ items: [] });
 
     renderWithProviders(<Dashboard />);
 
@@ -241,6 +253,8 @@ describe("Dashboard", () => {
         { id: "item-2", library_id: "lib-1", name: "Item B", status: "available" },
       ],
     });
+    // borrow_requests
+    mockList.mockResolvedValueOnce({ items: [] });
     // borrowers (bor-1 from allLoans)
     mockList.mockResolvedValueOnce({
       items: [{ id: "bor-1", name: "Solo Friend", phone: "+15551111111" }],
@@ -251,6 +265,50 @@ describe("Dashboard", () => {
     expect(await screen.findByText("Solo Library")).toBeInTheDocument();
     expect(screen.getByTestId("stat-lent")).toHaveTextContent("2 lent");
     expect(screen.getByTestId("stat-friends")).toHaveTextContent("1 friend helped");
+  });
+
+  it("shows error state with Try Again button when loadAll fails", async () => {
+    mockList.mockRejectedValue(new Error("Server down"));
+
+    renderWithProviders(<Dashboard />);
+
+    expect(await screen.findByText("Unable to load your data")).toBeInTheDocument();
+    expect(screen.getByText("Try Again")).toBeInTheDocument();
+    expect(screen.getByText(/server might be down/i)).toBeInTheDocument();
+  });
+
+  it("retries loading when Try Again is clicked", async () => {
+    // First load fails
+    mockList.mockRejectedValue(new Error("Server down"));
+    renderWithProviders(<Dashboard />);
+    expect(await screen.findByText("Unable to load your data")).toBeInTheDocument();
+
+    // Setup success for retry
+    vi.clearAllMocks();
+    setupEmptyDashboard();
+    fireEvent.click(screen.getByText("Try Again"));
+
+    // Dashboard should load
+    expect(await screen.findByText("No libraries yet. Create one to start lending!")).toBeInTheDocument();
+  });
+
+  it("shows success toast after marking item as returned", async () => {
+    setupDashboardWithData();
+    mockRpc.mockResolvedValue({});
+    // After return, loadAll is called
+    setupEmptyDashboard();
+
+    renderWithProviders(<Dashboard />);
+
+    fireEvent.click(await screen.findByText("Mark Returned"));
+
+    // Confirm in dialog
+    const confirmBtns = await screen.findAllByRole("button", { name: "Mark Returned" });
+    fireEvent.click(confirmBtns[confirmBtns.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Item marked as returned")).toBeInTheDocument();
+    });
   });
 
   it("calls return_item rpc on Mark Returned after dialog confirmation", async () => {

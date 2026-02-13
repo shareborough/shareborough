@@ -903,7 +903,8 @@ test.describe("Comprehensive Behavior Coverage", () => {
 
       // Reload and verify persistence
       await page.reload();
-      await expect(page.getByLabel("Display name")).toHaveValue("Test User");
+      await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByLabel("Display name")).toHaveValue("Test User", { timeout: 10000 });
       await expect(page.getByLabel(/Phone/i)).toHaveValue("+15551234567");
     });
 
@@ -1042,8 +1043,8 @@ test.describe("Comprehensive Behavior Coverage", () => {
       await page.getByRole("button", { name: "Send Request" }).click();
       await expect(page.getByText("Request Sent!")).toBeVisible({ timeout: 10000 });
 
-      // Approve from dashboard
-      await page.goto("/dashboard");
+      // Approve from notifications page
+      await page.goto("/dashboard/notifications");
       await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 10000 });
       await page.locator(".card").filter({ hasText: itemName }).getByRole("button", { name: "Approve" }).click();
       await expect(page.getByText("Currently Borrowed")).toBeVisible({ timeout: 5000 });

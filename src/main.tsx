@@ -9,13 +9,13 @@ import "./index.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ToastProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <ToastProvider>
           <Routes>
             <Route path="/*" element={<App />} />
           </Routes>
-        </ToastProvider>
-      </BrowserRouter>
+          </ToastProvider>
+        </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>,
 );
